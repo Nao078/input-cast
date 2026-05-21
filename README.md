@@ -128,3 +128,7 @@ curl -X POST http://localhost:8080/api/input/mock \
 MVP では実 HID 読み取りには踏み込まず、`internal/input.Provider` 経由の mock 入力だけで完成形を動かします。次の段階で Web Gamepad API、OS HID、WebHID、serial などの provider を追加する想定です。
 
 GP2040-CE は XInput、DInput、Switch、PS 系など複数の入力モードを持つため、各 provider は取得したデバイス固有の入力名を上記の内部標準名へ正規化してから server に渡します。OBS Browser Source 内で Gamepad API を直接扱う方式は環境差や権限差が出やすいため、server 経由で WebSocket 配信する構成を初期方針にしています。
+
+## License
+
+MIT License. See [LICENSE](LICENSE).
