@@ -47,6 +47,26 @@ http://localhost:8080/gamepad
 
 表示側は OBS Browser Source で `/overlay` を開き、入力側は通常のブラウザで `/gamepad` を開きます。どちらもブラウザで完結するため、別途クライアントアプリはありません。
 
+reverse proxy のサブパスで公開する場合は、`/api/` や `/ws` をグローバル location にせず、アプリ全体を同じ prefix にまとめてください。例:
+
+```nginx
+location = /input-cast {
+    return 301 /input-cast/;
+}
+
+location ^~ /input-cast/ {
+    proxy_pass http://192.168.1.58:12000/;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+}
+```
+
+この構成では `https://<host>/input-cast/overlay` と `https://<host>/input-cast/gamepad` でアクセスします。
+
 ## API
 
 - `GET /overlay`: OBS 用 overlay HTML

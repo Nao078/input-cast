@@ -51,9 +51,26 @@
   let selectedLayout = 'controller'
   let draggingLayout = null
   let currentProfile = 'default.json'
+  const basePath = detectBasePath()
 
   if (!serverInput.value) {
-    serverInput.value = location.origin + '/api/input/gamepad'
+    serverInput.value = location.origin + appPath('/api/input/gamepad')
+  }
+
+  function detectBasePath(){
+    const path = location.pathname.replace(/\/+$/, '')
+    return path.replace(/\/gamepad$/, '')
+  }
+
+  function appPath(path){
+    return (basePath || '') + path
+  }
+
+  function assetPath(path){
+    const value = String(path || '')
+    if (!value || /^(?:[a-z]+:)?\/\//i.test(value) || /^(?:data|blob):/i.test(value)) return value
+    if (value.startsWith('/')) return appPath(value)
+    return value
   }
 
   function append(message){
@@ -159,7 +176,7 @@
   }
 
   function loadLayout(){
-    fetch('/api/config')
+    fetch(appPath('/api/config'))
       .then(response => {
         currentProfile = response.headers.get('X-Config-Profile') || currentProfile
         return response.json()
@@ -182,7 +199,7 @@
   }
 
   function loadProfiles(){
-    fetch('/api/config/profiles')
+    fetch(appPath('/api/config/profiles'))
       .then(response => response.json())
       .then(data => {
         currentProfile = data.current || currentProfile
@@ -203,7 +220,7 @@
   function loadProfile(){
     const name = (configName.value || configProfile.value || '').trim()
     if (!name) return
-    fetch('/api/config/profile', {
+    fetch(appPath('/api/config/profile'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name })
@@ -283,7 +300,7 @@
         y: layoutConfig.controller.y,
         width: layoutConfig.controller.width,
         height: layoutConfig.controller.height,
-        href: layoutConfig.controller.image,
+        href: assetPath(layoutConfig.controller.image),
         preserveAspectRatio: 'xMidYMid slice',
         opacity: 0.72,
         'data-target': 'controller'
@@ -420,7 +437,7 @@
   function saveLayout(profile){
     if (!layoutConfig) return
     const query = profile ? '?profile=' + encodeURIComponent(profile) : ''
-    fetch('/api/config' + query, {
+    fetch(appPath('/api/config') + query, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(layoutConfig)
@@ -449,7 +466,7 @@
     if (!file || !layoutConfig) return
     const body = new FormData()
     body.append('image', file)
-    fetch('/api/background/upload', {
+    fetch(appPath('/api/background/upload'), {
       method: 'POST',
       body
     }).then(response => {

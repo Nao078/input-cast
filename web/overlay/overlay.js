@@ -11,9 +11,26 @@
   const directionOrder = ['up', 'down', 'left', 'right']
   const directionLabels = { up: '↑', down: '↓', left: '←', right: '→' }
   const buttonOrder = ['b1', 'b2', 'b3', 'b4', 'l1', 'l2', 'r1', 'r2', 's1', 's2', 'l3', 'r3', 'a1', 'a2']
+  const basePath = detectBasePath()
+
+  function detectBasePath(){
+    const path = location.pathname.replace(/\/+$/, '')
+    return path.replace(/\/(?:overlay|preview)$/, '')
+  }
+
+  function appPath(path){
+    return (basePath || '') + path
+  }
+
+  function assetPath(path){
+    const value = String(path || '')
+    if (!value || /^(?:[a-z]+:)?\/\//i.test(value) || /^(?:data|blob):/i.test(value)) return value
+    if (value.startsWith('/')) return appPath(value)
+    return value
+  }
 
   function fetchConfig(){
-    return fetch('/api/config').then(r=>r.json())
+    return fetch(appPath('/api/config')).then(r=>r.json())
   }
 
   function buildButtons(cfg){
@@ -63,7 +80,7 @@
     bg.style.height = c.height + 'px'
     if (c.color) bg.style.background = c.color
     if (c.image) {
-      bg.style.backgroundImage = 'url("' + String(c.image).replace(/"/g, '\\"') + '")'
+      bg.style.backgroundImage = 'url("' + assetPath(c.image).replace(/"/g, '\\"') + '")'
       bg.style.backgroundSize = 'cover'
       bg.style.backgroundPosition = 'center'
     }
@@ -255,7 +272,7 @@
 
   function connect(){
     const proto = (location.protocol === 'https:') ? 'wss' : 'ws'
-    const ws = new WebSocket(proto + '://' + location.host + '/ws')
+    const ws = new WebSocket(proto + '://' + location.host + appPath('/ws'))
     ws.onopen = () => {
       // ensure we have latest config on reconnect
       fetchConfig().then(cfg=>{ buildButtons(cfg) }).catch(()=>{})
