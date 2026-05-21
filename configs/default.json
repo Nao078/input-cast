@@ -1,0 +1,207 @@
+{
+  "overlay": {
+    "width": 1920,
+    "height": 1080,
+    "background_transparent": true
+  },
+  "history": {
+    "enabled": true,
+    "x": 60,
+    "y": 100,
+    "width": 330,
+    "height": 880,
+    "max_entries": 24
+  },
+  "controller": {
+    "x": 855,
+    "y": 946,
+    "width": 210,
+    "height": 120,
+    "color": "#5f7e91"
+  },
+  "buttons": [
+    {
+      "id": "left",
+      "label": "←",
+      "visible": true,
+      "x": 860,
+      "y": 987,
+      "size": 24,
+      "color": "#ff0000",
+      "pressed_color": "#080a0e"
+    },
+    {
+      "id": "down",
+      "label": "↓",
+      "visible": true,
+      "x": 889,
+      "y": 979,
+      "size": 24,
+      "color": "#ff0000",
+      "pressed_color": "#080a0e"
+    },
+    {
+      "id": "right",
+      "label": "→",
+      "visible": true,
+      "x": 918,
+      "y": 981,
+      "size": 24,
+      "color": "#ff0000",
+      "pressed_color": "#080a0e"
+    },
+    {
+      "id": "up",
+      "label": "↑",
+      "visible": true,
+      "x": 936,
+      "y": 1035,
+      "size": 24,
+      "color": "#ff0000",
+      "pressed_color": "#080a0e"
+    },
+    {
+      "id": "b1",
+      "label": "A",
+      "visible": true,
+      "x": 947,
+      "y": 999,
+      "size": 24,
+      "color": "#007dff",
+      "pressed_color": "#080a0e"
+    },
+    {
+      "id": "b2",
+      "label": "B",
+      "visible": true,
+      "x": 976,
+      "y": 991,
+      "size": 24,
+      "color": "#007dff",
+      "pressed_color": "#080a0e"
+    },
+    {
+      "id": "b3",
+      "label": "X",
+      "visible": true,
+      "x": 948,
+      "y": 969,
+      "size": 24,
+      "color": "#007dff",
+      "pressed_color": "#080a0e"
+    },
+    {
+      "id": "b4",
+      "label": "Y",
+      "visible": true,
+      "x": 975,
+      "y": 961,
+      "size": 24,
+      "color": "#007dff",
+      "pressed_color": "#080a0e"
+    },
+    {
+      "id": "l1",
+      "label": "LB",
+      "visible": true,
+      "x": 1032,
+      "y": 960,
+      "size": 24,
+      "color": "#007dff",
+      "pressed_color": "#080a0e"
+    },
+    {
+      "id": "l2",
+      "label": "LT",
+      "visible": true,
+      "x": 1033,
+      "y": 990,
+      "size": 24,
+      "color": "#007dff",
+      "pressed_color": "#080a0e"
+    },
+    {
+      "id": "r1",
+      "label": "RB",
+      "visible": true,
+      "x": 1003,
+      "y": 958,
+      "size": 24,
+      "color": "#007dff",
+      "pressed_color": "#080a0e"
+    },
+    {
+      "id": "r2",
+      "label": "RT",
+      "visible": true,
+      "x": 1004,
+      "y": 988,
+      "size": 24,
+      "color": "#007dff",
+      "pressed_color": "#080a0e"
+    },
+    {
+      "id": "s1",
+      "label": "BACK",
+      "visible": false,
+      "x": 1108,
+      "y": 959,
+      "size": 10,
+      "color": "#000000",
+      "pressed_color": "#080a0e"
+    },
+    {
+      "id": "s2",
+      "label": "START",
+      "visible": false,
+      "x": 1109,
+      "y": 909,
+      "size": 10,
+      "color": "#000000",
+      "pressed_color": "#080a0e"
+    },
+    {
+      "id": "l3",
+      "label": "LS",
+      "visible": true,
+      "x": 909,
+      "y": 1023,
+      "size": 24,
+      "color": "#007dff",
+      "pressed_color": "#080a0e"
+    },
+    {
+      "id": "r3",
+      "label": "RS",
+      "visible": true,
+      "x": 969,
+      "y": 1020,
+      "size": 24,
+      "color": "#007dff",
+      "pressed_color": "#080a0e"
+    },
+    {
+      "id": "a1",
+      "label": "HOME",
+      "visible": false,
+      "x": 1108,
+      "y": 935,
+      "size": 10,
+      "color": "#000000",
+      "pressed_color": "#080a0e"
+    },
+    {
+      "id": "a2",
+      "label": "TURBO",
+      "visible": false,
+      "x": 1109,
+      "y": 986,
+      "size": 10,
+      "color": "#000000",
+      "pressed_color": "#080a0e"
+    }
+  ],
+  "mappings": {
+    "mock": {}
+  }
+}

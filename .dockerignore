@@ -1,0 +1,9 @@
+.git
+.codex
+.agents
+server
+client
+tmp
+*.log
+web/overlay/uploads/*
+!web/overlay/uploads/.gitkeep

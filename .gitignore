@@ -1,0 +1,33 @@
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Go build/test outputs
+/server
+/client
+/input-cast
+*.exe
+*.test
+*.out
+coverage.*
+
+# Runtime uploads
+/web/overlay/uploads/*
+!/web/overlay/uploads/.gitkeep
+/configs/.active-profile
+
+# Logs and temp files
+*.log
+tmp/
+temp/
+
+# Editor / OS noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Codex / local agent state
+.codex/
+.agents/

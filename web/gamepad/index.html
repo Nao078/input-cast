@@ -1,0 +1,115 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Gamepad Input Bridge</title>
+  <style>
+    body{font-family:system-ui,Arial;margin:16px;background:#111;color:#f5f5f5}
+    #status{margin-bottom:12px}
+    input{padding:6px}
+    .btn{display:inline-block;padding:8px 12px;background:#007ACC;color:#fff;border-radius:6px;text-decoration:none}
+    .btn.secondary{background:#666;margin-left:8px}
+    .btn.warning{background:#955f00;margin-left:8px}
+    .btn.success{background:#168a4a;margin-left:8px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px}
+    .panel{border:1px solid #555;background:#1d1d1d;padding:12px}
+    .panel h3{margin:0 0 8px}
+    .editor{display:grid;grid-template-columns:minmax(360px,1fr) 280px;gap:12px;margin-top:12px}
+    .editor svg{width:100%;height:360px;border:1px solid #555;background:#070707;touch-action:none}
+    .editor-form{display:grid;grid-template-columns:84px 1fr;gap:8px;align-content:start}
+    .editor-form label{color:#ddd;font-size:13px}
+    .editor-form input,.editor-form select{box-sizing:border-box;width:100%;padding:6px;background:#111;color:#f5f5f5;border:1px solid #555}
+    .editor-form input[type="checkbox"]{width:auto;justify-self:start}
+    .editor-form input[type="color"]{height:34px;padding:2px}
+    .editor-actions{grid-column:1 / -1;margin-top:6px}
+    .editor-note{grid-column:1 / -1;color:#aaa;font-size:12px;line-height:1.5}
+    .layout-bg{stroke:rgba(255,255,255,0.55);stroke-width:2}
+    .layout-bg.selected,.layout-button.selected{stroke:#22efff;stroke-width:3}
+    .layout-button{stroke:rgba(255,255,255,0.82);stroke-width:2;cursor:grab}
+    .layout-label{fill:#fff;font-size:7px;font-weight:800;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+    pre{height:320px;overflow:auto;border:1px solid #555;margin-top:12px;padding:8px;background:#1d1d1d}
+    code{color:#ffd36e}
+    @media (max-width: 760px){.editor{grid-template-columns:1fr}.editor svg{height:300px}}
+  </style>
+</head>
+<body>
+  <h2>Gamepad Input Bridge</h2>
+  <div id="status">Connect GP2040-CE, press a button, then click Start.</div>
+  <div>
+    <label>Server URL: <input id="server" size="50"></label>
+  </div>
+  <div style="margin-top:12px">
+    <a id="start" class="btn" href="#">Start</a>
+    <a id="stop" class="btn secondary" href="#">Stop</a>
+    <a id="scan" class="btn secondary" href="#">Scan Gamepads</a>
+    <a id="hid" class="btn warning" href="#">Check WebHID</a>
+  </div>
+  <div class="grid">
+    <section class="panel">
+      <h3>Gamepad API</h3>
+      <div id="gamepads">Not scanned yet.</div>
+    </section>
+    <section class="panel">
+      <h3>WebHID</h3>
+      <div id="hid-status">Not checked yet.</div>
+    </section>
+    <section class="panel">
+      <h3>Hints</h3>
+      <div>Windowsで <code>joy.cpl</code> を開き、GP2040-CEが見えるか確認してください。</div>
+      <div>見えない場合はGP2040-CEの入力モードを XInput / DInput / Switch で切り替えて試してください。</div>
+    </section>
+  </div>
+  <section class="panel">
+    <h3>Overlay Layout Editor</h3>
+    <div class="editor">
+      <svg id="layout-editor" viewBox="0 0 220 160" aria-label="Overlay layout editor"></svg>
+      <div class="editor-form">
+        <label for="config-profile">Profile</label>
+        <select id="config-profile"></select>
+        <label for="config-name">File</label>
+        <input id="config-name" type="text" placeholder="SF6.json">
+        <div class="editor-actions">
+          <a id="config-load" class="btn secondary" href="#">Load</a>
+          <a id="config-save-as" class="btn success" href="#">Save As</a>
+        </div>
+        <label for="layout-target">Target</label>
+        <select id="layout-target"></select>
+        <label for="layout-visible">Visible</label>
+        <input id="layout-visible" type="checkbox">
+        <label for="layout-label">Label</label>
+        <input id="layout-label" type="text">
+        <label for="layout-history-label">Hist Text</label>
+        <input id="layout-history-label" type="text" maxlength="1">
+        <label for="layout-history-color">Hist Color</label>
+        <input id="layout-history-color" type="color">
+        <label for="layout-color">Color</label>
+        <input id="layout-color" type="color">
+        <label for="layout-bg-color">BG Color</label>
+        <input id="layout-bg-color" type="color">
+        <label for="layout-bg-image">BG Image</label>
+        <input id="layout-bg-image" type="text" placeholder="/path-or-url.png">
+        <label for="layout-bg-upload">Upload</label>
+        <input id="layout-bg-upload" type="file" accept="image/*">
+        <label for="layout-x">X</label>
+        <input id="layout-x" type="number" step="1">
+        <label for="layout-y">Y</label>
+        <input id="layout-y" type="number" step="1">
+        <label for="layout-size">Size</label>
+        <input id="layout-size" type="number" step="1">
+        <label for="layout-width">Width</label>
+        <input id="layout-width" type="number" step="1">
+        <label for="layout-height">Height</label>
+        <input id="layout-height" type="number" step="1">
+        <div class="editor-actions">
+          <a id="layout-reload" class="btn secondary" href="#">Reload</a>
+          <a id="layout-save" class="btn success" href="#">Save Current</a>
+        </div>
+        <div id="layout-status" class="editor-note">Loading layout...</div>
+      </div>
+    </div>
+  </section>
+  <pre id="log"></pre>
+  <script src="/gamepad-static/gamepad.js?v=history-style-1" defer></script>
+</body>
+</html>

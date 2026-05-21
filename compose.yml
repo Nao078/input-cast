@@ -1,0 +1,10 @@
+services:
+  input-cast:
+    build: .
+    container_name: input-cast
+    ports:
+      - "${INPUT_CAST_PORT}:8080"
+    volumes:
+      - ${INPUT_CAST_CONFIGS_DIR}:/app/configs
+      - ${INPUT_CAST_UPLOADS_DIR}:/app/web/overlay/uploads
+    restart: unless-stopped
