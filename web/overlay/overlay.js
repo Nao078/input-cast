@@ -10,6 +10,16 @@
   const maxFrameCount = 99
   const directionOrder = ['up', 'down', 'left', 'right']
   const directionLabels = { up: '↑', down: '↓', left: '←', right: '→' }
+  const historyDirections = {
+    up: { label: '↑', x: 1, y: 0 },
+    down: { label: '↓', x: 1, y: 2 },
+    left: { label: '←', x: 0, y: 1 },
+    right: { label: '→', x: 2, y: 1 },
+    'up-left': { label: '↖', x: 0, y: 0 },
+    'up-right': { label: '↗', x: 2, y: 0 },
+    'down-left': { label: '↙', x: 0, y: 2 },
+    'down-right': { label: '↘', x: 2, y: 2 }
+  }
   const buttonOrder = ['b1', 'b2', 'b3', 'b4', 'l1', 'l2', 'r1', 'r2', 's1', 's2', 'l3', 'r3', 'a1', 'a2']
   const basePath = detectBasePath()
 
@@ -58,6 +68,7 @@
       el.style.top = b.y+'px'
       el.style.width = b.size+'px'
       el.style.height = b.size+'px'
+      el.style.setProperty('--button-size', b.size+'px')
       if (b.color) el.style.setProperty('--button-color', b.color)
       if (b.pressed_color) el.style.setProperty('--button-pressed-color', b.pressed_color)
       if (b.text_color) el.style.setProperty('--button-text-color', b.text_color)
@@ -182,7 +193,7 @@
         '<div class="history-row' + (entry.live ? ' live' : '') + '">',
         '<span class="history-frame">' + escapeHTML(String(entry.frames)) + '</span>',
         '<span class="history-input">',
-        parts.direction ? '<span class="history-token history-direction">' + escapeHTML(parts.direction) + '</span>' : '',
+        historyDirectionMarkup(parts.direction),
         historyButtonMarkup(parts),
         '</span>',
         '</div>'
@@ -190,10 +201,22 @@
     }).join('')
   }
 
+  function historyDirectionMarkup(direction){
+    if (!direction) return ''
+    const label = escapeHTML(direction.label || '')
+    if (direction.x === undefined || direction.y === undefined) {
+      return '<span class="history-token history-direction history-direction-text">' + label + '</span>'
+    }
+    const style = '--direction-bg-x:-' + (Number(direction.x || 0) * 28) + 'px;--direction-bg-y:-' + (Number(direction.y || 0) * 28) + 'px'
+    return '<span class="history-token history-direction" style="' + style + '" aria-label="' + label + '" title="' + label + '"></span>'
+  }
+
   function historyButtonMarkup(parts){
     if (parts.buttons.length > 0) {
       return parts.buttons.map(button => {
-        return '<span class="history-token history-button" style="background:' + escapeAttribute(button.color) + '">' + escapeHTML(button.label) + '</span>'
+        const label = String(button.label || '')
+        const lengthClass = label.length > 1 ? ' history-button-compact' : ''
+        return '<span class="history-token history-button' + lengthClass + '" style="background:' + escapeAttribute(button.color) + '">' + escapeHTML(label) + '</span>'
       }).join('')
     }
     if (!parts.direction) {
@@ -215,14 +238,15 @@
     const down = !!buttonsState.down
     const left = !!buttonsState.left
     const right = !!buttonsState.right
-    if (down && right) return '↘'
-    if (down && left) return '↙'
-    if (up && right) return '↗'
-    if (up && left) return '↖'
-    return directionOrder
+    if (down && right && !up && !left) return historyDirections['down-right']
+    if (down && left && !up && !right) return historyDirections['down-left']
+    if (up && right && !down && !left) return historyDirections['up-right']
+    if (up && left && !down && !right) return historyDirections['up-left']
+    const directions = directionOrder
       .filter(id => buttonsState[id])
-      .map(id => directionLabels[id])
-      .join('')
+    if (directions.length === 1) return historyDirections[directions[0]]
+    const label = directions.map(id => directionLabels[id]).join('')
+    return label ? { label } : null
   }
 
   function labelFor(id){
@@ -233,7 +257,7 @@
 
   function buttonHistoryToken(id){
     const def = buttonDefFor(id)
-    const label = (def && def.history_label) || labelFor(id).slice(0, 1) || id.slice(0, 1).toUpperCase()
+    const label = ((def && def.history_label) || labelFor(id) || id).slice(0, 2)
     const color = (def && (def.history_color || def.color)) || 'rgba(255,255,255,0.24)'
     return { label, color }
   }

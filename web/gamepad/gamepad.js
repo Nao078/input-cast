@@ -165,6 +165,7 @@
     append('started')
     timer = window.setInterval(readGamepads, 16)
     readGamepads()
+    updateVisibilityStatus()
   }
 
   function stop(){
@@ -173,6 +174,11 @@
     timer = null
     lastPayload = ''
     append('stopped')
+  }
+
+  function updateVisibilityStatus(){
+    if (!running || !document.hidden) return
+    status.textContent = 'Gamepad bridge is hidden. Browser Gamepad API may pause or miss inputs; keep this page visible.'
   }
 
   function loadLayout(){
@@ -404,7 +410,7 @@
     if (button) {
       button.visible = layoutInputs.visible.checked
       button.label = layoutInputs.label.value
-      button.history_label = layoutInputs.historyLabel.value.slice(0, 1)
+      button.history_label = layoutInputs.historyLabel.value.slice(0, 2)
       button.history_color = layoutInputs.historyColor.value
       button.color = layoutInputs.color.value
       target.size = Math.max(1, numberValue(layoutInputs.size, target.size))
@@ -612,6 +618,7 @@
     append('disconnected: ' + event.gamepad.id)
   })
   window.addEventListener('focus', renderGamepads)
+  document.addEventListener('visibilitychange', updateVisibilityStatus)
   window.setInterval(renderGamepads, 1000)
   renderGamepads()
   loadLayout()

@@ -1,154 +1,121 @@
-# Leverless Overlay
+# Leverless Overlay (レバーレス入力表示ツール)
 
-GP2040-CE 系レバーレスコントローラ向けの入力表示ツール MVP です。OBS には Browser Source として overlay URL を読み込ませます。
+GP2040-CE系レバーレスコントローラーの入力をブラウザやOBSに表示するためのツールです。
 
-## 起動
+## 💡 最もおすすめの構成（推奨環境）
+本ツールは、**「サーバー」を裏で動かし、「Fyne Bridge（専用アプリ）」で入力をキャプチャする構成**が最も安定するため推奨されています。
 
-```bash
-go run ./cmd/server
+
+```
+[レバーレス] ──> [Fyne Bridge (常駐アプリ)] ──> [サーバー (Go)] ──> [OBS (ブラウザソース)]
 ```
 
-設定ファイルを指定して起動する場合:
+---
 
+## 🚀 クイックスタート (推奨構成での起動手順)
+
+まずは基本となるサーバーと常駐アプリ（Bridge）を起動します。
+
+### 1. サーバーの起動
 ```bash
+# 通常起動
+go run ./cmd/server
+
+# ストリートファイター6用の設定を指定して起動する場合
 go run ./cmd/server -config SF6.json
 ```
 
-設定プロファイルは `configs/*.json` として保存され、`/gamepad` の Layout Editor から `SF6.json` / `GGST.json` のように切り替え・保存できます。
-
-Docker で起動する場合:
-
+💡 **Dockerで起動したい場合**
 ```bash
 cp .env.example .env
 docker compose up --build
 ```
 
-設定ファイルは `/gamepad` の Layout Editor から切り替えます。最後に読み込んだプロファイル名は `configs/.active-profile` に保存され、次回起動時に自動で復元されます。
+### 2. Fyne Bridge (常駐アプリ) のビルド
 
-Docker 実行時も `configs/` はコンテナへマウントされるため、Layout Editor の保存内容はホスト側の `configs/*.json` に残ります。背景画像アップロードは `web/overlay/uploads/` に保存されます。
+ゲーム画面（フルスクリーン）の裏でも確実に入力を拾い続けるために、以下を実行します。
 
-OBS Browser Source の URL:
-
-```txt
-http://localhost:8080/overlay
+- **Linux:** sudo 実行や `input` グループへの追加が必要
+```
+go build ./cmd/bridge-fyne
 ```
 
-プレビュー URL:
-
-```txt
-http://localhost:8080/preview
+- **Windows:**
+```
+CGO_ENABLED=1 \
+CC=x86_64-w64-mingw32-gcc \
+GOOS=windows \
+GOARCH=amd64 \
+go build -o bridge-fyne.exe ./cmd/bridge-fyne
 ```
 
-入力側ブラウザ:
+### 3. Fyne Bridge (常駐アプリ) の起動
 
-```txt
-http://localhost:8080/gamepad
-```
+ゲーム画面（フルスクリーン）の裏でも確実に入力を拾い続けるために、以下を実行します。
 
-表示側は OBS Browser Source で `/overlay` を開き、入力側は通常のブラウザで `/gamepad` を開きます。どちらもブラウザで完結するため、別途クライアントアプリはありません。
+* **Linux:** bridge-fyne 実行
+* **Windows:** bridge-fyne.exe 実行
 
-reverse proxy のサブパスで公開する場合は、`/api/` や `/ws` をグローバル location にせず、アプリ全体を同じ prefix にまとめてください。例:
+---
 
-```nginx
-location = /input-cast {
-    return 301 /input-cast/;
-}
+## 📺 各種URL・接続先一覧
 
-location ^~ /input-cast/ {
-    proxy_pass http://192.168.1.58:12000/;
-    proxy_http_version 1.1;
-    proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection $connection_upgrade;
-}
-```
+起動後、用途に合わせて以下のURLを使い分けます。
 
-この構成では `https://<host>/input-cast/overlay` と `https://<host>/input-cast/gamepad` でアクセスします。
+| 用途 | URL | 概要 |
+| --- | --- | --- |
+| **OBS表示用** | `http://localhost:8080/overlay` | OBSの「ブラウザソース」にこれを貼り付けます。 |
+| **画面プレビュー** | `http://localhost:8080/preview` | ブラウザで現在の見え方を確認できます。 |
+| **ブラウザ版Bridge** | `http://localhost:8080/gamepad` | WSL環境など、上記アプリが動かない時の簡易ブラウザ版。 |
 
-## API
+---
 
-- `GET /overlay`: OBS 用 overlay HTML
-- `GET /preview`: preview 用 HTML
-- `GET /ws`: overlay へ入力状態と設定を配信する WebSocket
-- `GET /api/config`: 現在の設定 JSON を取得
-- `POST /api/config`: 設定 JSON を保存し、接続中 overlay へ即時配信
-- `POST /api/input/mock`: mock 入力状態を送信
+## 🛠️ レイアウトのカスタマイズ方法
 
-## GP2040-CE 実機入力
+ボタンの配置や色の変更は、**Fyne Bridge（常駐アプリ）** またはブラウザで `/gamepad` を開いた中にある **Layout Editor** から直感的に行えます。
 
-Linux では `oshid` provider が `/dev/input/event*` を定期スキャンし、見つかったゲームパッド入力を内部標準ボタン名へ変換して overlay へ配信します。server 起動後にGP2040-CEを接続しても数秒以内に検出します。
+* **位置変更:** プレビュー上のボタンを**ドラッグ＆ドロップ**
+* **詳細設定:** ボタンを**右クリック**（表示/非表示、ラベル、カラー、サイズ変更）
+* **全体変更:** `All Button Colors` から全ボタンの一括色替え
+* **保存先:** 設定は `configs/*.json` に保存され、次回起動時に自動で復元されます。
+
+---
+
+## ❓ 動かない時のトラブルシューティング
+
+### 1. Linuxで入力を検知しない
+
+`/dev/input/event*` の読み取り権限が足りていない可能性があります。
 
 ```bash
-go run ./cmd/server
-```
+# 対策1: root権限で実行する
+sudo ./bridge-fyne
 
-別ターミナルで provider 状態を確認できます。
-
-```bash
-curl http://localhost:8080/api/providers
-```
-
-`/dev/input/event*` の読み取り権限がない場合は入力を読めません。開発時の確認では次のどちらかを使ってください。
-
-```bash
-sudo go run ./cmd/server
-```
-
-または、ユーザーを `input` グループに追加して再ログインします。
-
-```bash
+# 対策2: ユーザーをinputグループに追加して再ログイン
 sudo usermod -a -G input "$USER"
 ```
 
-Docker コンテナ内で Linux の `/dev/input/event*` を読む場合は、実行環境に応じて `compose.yml` に `/dev/input` のデバイスマウントや権限設定を追加してください。Windows / WSL では、通常は実機入力をコンテナに直接渡さず、Windows 側ブラウザの `/gamepad` を Gamepad API bridge として使う構成が扱いやすいです。
+### 2. Windows（ブラウザBridge）で「No gamepad visible」と出る
 
-WSL のように `/dev/input` が存在しない環境では、Linux evdev から実機を読めません。その場合は Windows 側のブラウザで次を開き、Gamepad API bridge として使います。
+1. コントローラーのボタンを何か1回押してブラウザに認識させてください。
+2. 認識しない場合は、Windowsの `joy.cpl`（ゲームコントローラー設定）を開き、OS自体がコントローラーを認識しているか確認してください。
+3. 認識していない場合、GP2040-CEの起動モードを **XInputモード** に切り替えて接続し直してください。
 
-```txt
-http://localhost:8080/gamepad
-```
+---
 
-GP2040-CE のボタンを一度押してブラウザに認識させてから `Start` を押してください。bridge は `/api/input/gamepad` に入力状態を送り、overlay へ配信します。
+## 🛠️ 開発者向け情報 (API仕様など)
 
-`No gamepad visible` のままの場合は、bridge の `Scan Gamepads` と `Check WebHID` を押して切り分けます。
+* `GET /ws`: WebSocket（入力状態・設定配信）
+* `GET /api/config`: 現在の設定JSONを取得
+* `POST /api/config`: 設定JSONを保存
+* `GET /api/config/profiles`: プロファイル一覧取得
+* `POST /api/config/profile`: プロファイル切り替え
+* `POST /api/input/gamepad`: Bridgeからの入力送信レシーバー
 
-- `Scan Gamepads` で何も出ない: ブラウザの Gamepad API から見えていません。Windows の `joy.cpl` で認識状態を確認してください。
-- `joy.cpl` にも出ない: GP2040-CE の入力モードを XInput / DInput / Switch などに切り替えて再接続してください。
-- `Check WebHID` には出るが Gamepad API に出ない: HIDとしては見えていますがゲームパッドとして公開されていません。GP2040-CEの入力モード変更が必要です。
-- OBS Browser Source内ではなく、まず Chrome または Edge の通常タブで `http://localhost:8080/gamepad` を開いて確認してください。
-
-mock 入力例:
-
-```bash
-curl -X POST http://localhost:8080/api/input/mock \
-  -H 'Content-Type: application/json' \
-  -d '{"device_id":"mock","buttons":{"left":true,"b1":true,"b4":true}}'
-```
-
-離上例:
+**Mock（テスト用）入力送信例:**
 
 ```bash
 curl -X POST http://localhost:8080/api/input/mock \
   -H 'Content-Type: application/json' \
-  -d '{"device_id":"mock","buttons":{"left":false,"b1":false,"b4":false}}'
+  -d '{"device_id":"mock","buttons":{"left":true,"b1":true}}'
 ```
-
-## 設定
-
-設定は `configs/default.json` に保存されます。`overlay.width` / `overlay.height` を基準解像度として、OBS Browser Source の表示サイズに合わせて自動スケールします。初期設定はフルHD、つまり `1920x1080` です。
-
-`history.enabled` で入力履歴の表示を切り替えられます。仮想コントローラは履歴設定に関係なく常に表示されます。履歴は状態が変わるたびに、`フレーム数`、`矢印入力`、`ボタン` の順で表示します。同時押しは `↓←` や `B1+B2` のようにまとめて表示します。
-
-内部標準ボタン名は GP2040-CE の汎用名に寄せて、`up` / `down` / `left` / `right` / `b1`-`b4` / `l1` / `l2` / `r1` / `r2` / `s1` / `s2` / `l3` / `r3` / `a1` / `a2` を使います。
-
-## 入力取得方針
-
-MVP では実 HID 読み取りには踏み込まず、`internal/input.Provider` 経由の mock 入力だけで完成形を動かします。次の段階で Web Gamepad API、OS HID、WebHID、serial などの provider を追加する想定です。
-
-GP2040-CE は XInput、DInput、Switch、PS 系など複数の入力モードを持つため、各 provider は取得したデバイス固有の入力名を上記の内部標準名へ正規化してから server に渡します。OBS Browser Source 内で Gamepad API を直接扱う方式は環境差や権限差が出やすいため、server 経由で WebSocket 配信する構成を初期方針にしています。
-
-## License
-
-MIT License. See [LICENSE](LICENSE).

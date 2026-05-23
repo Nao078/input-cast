@@ -64,6 +64,7 @@
     {
       "id": "b1",
       "label": "K",
+      "history_color": "#007dff",
       "visible": true,
       "x": 950,
       "y": 999,
@@ -163,7 +164,8 @@
     },
     {
       "id": "l3",
-      "label": "Imp",
+      "label": "DI",
+      "history_color": "#007dff",
       "visible": true,
       "x": 905,
       "y": 1028,
@@ -173,7 +175,8 @@
     },
     {
       "id": "r3",
-      "label": "パリ",
+      "label": "DP",
+      "history_color": "#2a9831",
       "visible": true,
       "x": 970,
       "y": 1020,

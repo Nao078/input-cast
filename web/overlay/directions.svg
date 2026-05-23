@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+  <rect width="96" height="96" fill="none" />
+
+  <polygon points="20,28 11,20 8,23 7,7 23,8 20,11 28,20" fill="#fff" stroke="#050505" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" />
+  <polygon points="42,27 42,15 37,15 48,3 59,15 54,15 54,27" fill="#fff" stroke="#050505" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" />
+  <polygon points="68,20 76,11 73,8 89,7 88,23 85,20 76,28" fill="#fff" stroke="#050505" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" />
+
+  <polygon points="27,42 15,42 15,37 3,48 15,59 15,54 27,54" fill="#fff" stroke="#050505" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" />
+  <polygon points="69,42 81,42 81,37 93,48 81,59 81,54 69,54" fill="#fff" stroke="#050505" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" />
+
+  <polygon points="28,76 20,85 23,88 7,89 8,73 11,76 20,68" fill="#fff" stroke="#050505" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" />
+  <polygon points="42,69 42,81 37,81 48,93 59,81 54,81 54,69" fill="#fff" stroke="#050505" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" />
+  <polygon points="76,68 85,76 88,73 89,89 73,88 76,85 68,76" fill="#fff" stroke="#050505" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" />
+</svg>
