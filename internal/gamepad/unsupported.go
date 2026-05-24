@@ -20,5 +20,5 @@ func (unsupportedBackend) Name() string {
 }
 
 func (unsupportedBackend) Run(ctx context.Context, updates chan<- Snapshot) error {
-	return fmt.Errorf("input-cast-bridge currently supports Linux and Windows clients only")
+	return fmt.Errorf("Input Cast Client currently supports Linux and Windows clients only")
 }

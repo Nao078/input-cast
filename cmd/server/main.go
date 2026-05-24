@@ -62,6 +62,7 @@ func main() {
 
 	// static files
 	fs := http.FileServer(http.Dir(filepath.Join(base, "web", "overlay")))
+	http.Handle("/assets/", noStore(http.StripPrefix("/assets/", http.FileServer(http.Dir(filepath.Join(base, "web", "assets"))))))
 	http.Handle("/static/", noStore(http.StripPrefix("/static/", http.FileServer(http.Dir(filepath.Join(base, "web", "overlay"))))))
 	http.Handle("/gamepad-static/", noStore(http.StripPrefix("/gamepad-static/", http.FileServer(http.Dir(filepath.Join(base, "web", "gamepad"))))))
 	http.HandleFunc("/overlay", func(w http.ResponseWriter, r *http.Request) {

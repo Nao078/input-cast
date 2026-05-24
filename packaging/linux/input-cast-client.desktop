@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Input Cast Client
+Exec=input-cast-client
+Icon=input-cast-client
+Terminal=false
+Categories=Utility;

@@ -2,11 +2,14 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"image/color"
 	"math"
+	"net/url"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -29,10 +32,15 @@ import (
 const (
 	appID               = "net.input-cast.bridge"
 	prefServerURL       = "server_url"
+	prefCustomServer    = "custom_server"
+	prefServerHost      = "server_host"
 	prefAutoStart       = "auto_start"
 	prefStartMinimized  = "start_minimized"
+	prefCloseToTray     = "close_to_tray"
 	prefScanIntervalMS  = "scan_interval_ms"
 	defaultServerURL    = "http://localhost:8080/api/input/gamepad"
+	defaultServerHost   = "localhost:8080"
+	serverInputEndpoint = "/api/input/gamepad"
 	defaultScanInterval = 2000
 	healthInterval      = time.Second
 	maxLogLines         = 60
@@ -51,12 +59,14 @@ type bridgeUI struct {
 
 	connectionIcon   *widget.Icon
 	connectionStatus *widget.Label
-	serverURL        *widget.Entry
+	customServer     *widget.Check
+	serverHost       *widget.Entry
 	configProfile    *widget.Select
 	currentProfile   string
 	scanInterval     *widget.Entry
 	autoStart        *widget.Check
 	startMinimized   *widget.Check
+	closeToTray      *widget.Check
 	status           *widget.Label
 	device           *widget.Label
 	lastSend         *widget.Label
@@ -133,17 +143,23 @@ func (f *fixedSizeLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 
 func main() {
 	a := app.NewWithID(appID)
+	a.SetIcon(appIconResource)
 	a.Settings().SetTheme(theme.DarkTheme())
-	w := a.NewWindow("input-cast bridge")
+	w := a.NewWindow("Input Cast Client")
+	w.SetIcon(appIconResource)
 	w.Resize(fyne.NewSize(920, 600))
 
 	ui := newBridgeUI(a, w)
 	w.SetContent(ui.content())
+	trayAvailable := setupTray(a, w, ui)
 	w.SetCloseIntercept(func() {
+		if trayAvailable && ui.closeToTray.Checked {
+			w.Hide()
+			return
+		}
 		ui.stop()
 		w.Close()
 	})
-	trayAvailable := setupTray(a, w, ui)
 
 	if ui.autoStart.Checked {
 		ui.start()
@@ -158,21 +174,43 @@ func main() {
 
 func newBridgeUI(a fyne.App, w fyne.Window) *bridgeUI {
 	prefs := a.Preferences()
+	customServer := prefs.BoolWithFallback(prefCustomServer, false)
+	serverHost := prefs.StringWithFallback(prefServerHost, "")
+	if serverHost == "" {
+		serverHost = serverHostFromURL(prefs.StringWithFallback(prefServerURL, defaultServerURL))
+	}
+	if serverHost == "" {
+		serverHost = defaultServerHost
+	}
+
 	ui := &bridgeUI{
 		app:            a,
 		window:         w,
-		client:         bridge.NewClient(prefs.StringWithFallback(prefServerURL, defaultServerURL)),
+		client:         bridge.NewClient(serverURLForSettings(customServer, serverHost)),
 		matrix:         make(map[string]*canvas.Circle),
 		matrixInactive: make(map[string]color.NRGBA),
 		matrixActive:   make(map[string]color.NRGBA),
 		matrixLabels:   make(map[string]*canvas.Text),
 	}
 
-	ui.serverURL = widget.NewEntry()
-	ui.serverURL.SetText(prefs.StringWithFallback(prefServerURL, defaultServerURL))
-	ui.serverURL.OnChanged = func(value string) {
-		prefs.SetString(prefServerURL, strings.TrimSpace(value))
-		ui.client.SetURL(value)
+	ui.customServer = widget.NewCheck("Use another server", func(value bool) {
+		if ui.serverHost == nil {
+			return
+		}
+		prefs.SetBool(prefCustomServer, value)
+		ui.serverHost.SetText(normalizeServerHost(ui.serverHost.Text))
+		ui.serverHost.SetPlaceHolder(serverHostPlaceholder(value))
+		ui.setServerHostEnabled(value)
+		ui.applyServerSettings()
+	})
+	ui.customServer.SetChecked(customServer)
+	ui.serverHost = widget.NewEntry()
+	ui.serverHost.SetPlaceHolder(serverHostPlaceholder(customServer))
+	ui.serverHost.SetText(serverHost)
+	ui.setServerHostEnabled(customServer)
+	ui.serverHost.OnChanged = func(value string) {
+		prefs.SetString(prefServerHost, normalizeServerHost(value))
+		ui.applyServerSettings()
 	}
 
 	ui.configProfile = widget.NewSelect(nil, func(value string) {
@@ -199,6 +237,11 @@ func newBridgeUI(a fyne.App, w fyne.Window) *bridgeUI {
 	})
 	ui.startMinimized.SetChecked(prefs.BoolWithFallback(prefStartMinimized, false))
 
+	ui.closeToTray = widget.NewCheck("Close to tray", func(value bool) {
+		prefs.SetBool(prefCloseToTray, value)
+	})
+	ui.closeToTray.SetChecked(prefs.BoolWithFallback(prefCloseToTray, true))
+
 	ui.status = widget.NewLabel("Stopped")
 	ui.connectionIcon = widget.NewIcon(antennaResource(theme.ColorNameDisabled))
 	ui.connectionStatus = widget.NewLabel("Not started")
@@ -220,8 +263,9 @@ func newBridgeUI(a fyne.App, w fyne.Window) *bridgeUI {
 
 func (ui *bridgeUI) content() fyne.CanvasObject {
 	serverURLField := container.NewVBox(
-		widget.NewLabelWithStyle("Server URL", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		ui.serverURL,
+		widget.NewLabelWithStyle("Server", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		ui.customServer,
+		ui.serverHost,
 	)
 	profileLoad := widget.NewButtonWithIcon("Load", theme.FolderOpenIcon(), ui.loadSelectedProfile)
 	profileSave := widget.NewButtonWithIcon("Save", theme.DocumentSaveIcon(), func() {
@@ -237,7 +281,7 @@ func (ui *bridgeUI) content() fyne.CanvasObject {
 		ui.scanInterval,
 	)
 
-	options := container.NewVBox(ui.autoStart, ui.startMinimized)
+	options := container.NewVBox(ui.autoStart, ui.startMinimized, ui.closeToTray)
 	actions := container.NewGridWithColumns(2, ui.startButton, ui.stopButton)
 	configPanel := widget.NewCard("Configuration", "", container.NewVBox(
 		serverURLField,
@@ -823,14 +867,92 @@ func (ui *bridgeUI) openButtonSettings(index int) {
 	d.Show()
 }
 
+func (ui *bridgeUI) applyServerSettings() {
+	if ui == nil || ui.client == nil {
+		return
+	}
+	custom := ui.customServer != nil && ui.customServer.Checked
+	host := defaultServerHost
+	if custom && ui.serverHost != nil {
+		host = normalizeServerHost(ui.serverHost.Text)
+		if host == "" {
+			host = defaultServerHost
+		}
+		ui.app.Preferences().SetString(prefServerHost, host)
+	}
+	serverURL := serverURLForSettings(custom, host)
+	ui.app.Preferences().SetString(prefServerURL, serverURL)
+	ui.client.SetURL(serverURL)
+}
+
+func (ui *bridgeUI) setServerHostEnabled(enabled bool) {
+	if ui.serverHost == nil {
+		return
+	}
+	if enabled {
+		ui.serverHost.Enable()
+		return
+	}
+	ui.serverHost.Disable()
+}
+
+func serverURLForSettings(custom bool, host string) string {
+	if !custom {
+		host = defaultServerHost
+	}
+	host = normalizeServerHost(host)
+	if host == "" {
+		host = defaultServerHost
+	}
+	return "http://" + host + serverInputEndpoint
+}
+
+func serverHostPlaceholder(custom bool) string {
+	if custom {
+		return "192.168.0.10 or server-name"
+	}
+	return defaultServerHost
+}
+
+func normalizeServerHost(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return ""
+	}
+	parsed := value
+	if !strings.Contains(parsed, "://") {
+		parsed = "//" + parsed
+	}
+	u, err := url.Parse(parsed)
+	if err == nil && u.Host != "" {
+		value = u.Host
+	}
+	value = strings.TrimPrefix(value, "http://")
+	value = strings.TrimPrefix(value, "https://")
+	value = strings.Trim(value, "/")
+	if value == "localhost" {
+		return defaultServerHost
+	}
+	if strings.Contains(value, ":") {
+		return value
+	}
+	return value + ":8080"
+}
+
+func serverHostFromURL(value string) string {
+	host := normalizeServerHost(value)
+	if host == "" {
+		return defaultServerHost
+	}
+	return host
+}
+
 func (ui *bridgeUI) start() {
 	if ui.running {
 		return
 	}
 
-	serverURL := strings.TrimSpace(ui.serverURL.Text)
-	ui.app.Preferences().SetString(prefServerURL, serverURL)
-	ui.client.SetURL(serverURL)
+	ui.applyServerSettings()
 
 	interval := ui.scanIntervalDuration()
 	ctx, cancel := context.WithCancel(context.Background())
@@ -962,14 +1084,16 @@ func (ui *bridgeUI) setRunningState(running bool) {
 			ui.status.SetText("Running")
 			ui.startButton.Disable()
 			ui.stopButton.Enable()
-			ui.serverURL.Disable()
+			ui.customServer.Disable()
+			ui.serverHost.Disable()
 			ui.scanInterval.Disable()
 			return
 		}
 		ui.status.SetText("Stopped")
 		ui.startButton.Enable()
 		ui.stopButton.Disable()
-		ui.serverURL.Enable()
+		ui.customServer.Enable()
+		ui.setServerHostEnabled(ui.customServer.Checked)
 		ui.scanInterval.Enable()
 	})
 }
@@ -1037,13 +1161,16 @@ func (ui *bridgeUI) appendLog(message string) {
 
 func setupTray(a fyne.App, w fyne.Window, ui *bridgeUI) bool {
 	if !shouldEnableTray() {
+		if ui.closeToTray != nil {
+			ui.closeToTray.Disable()
+		}
 		return false
 	}
 	desk, ok := a.(desktop.App)
 	if !ok {
 		return false
 	}
-	menu := fyne.NewMenu("input-cast bridge",
+	menu := fyne.NewMenu("Input Cast Client",
 		fyne.NewMenuItem("Show Window", func() {
 			w.Show()
 			w.RequestFocus()
@@ -1056,15 +1183,23 @@ func setupTray(a fyne.App, w fyne.Window, ui *bridgeUI) bool {
 		}),
 	)
 	desk.SetSystemTrayMenu(menu)
+	desk.SetSystemTrayIcon(trayIconResource)
 	desk.SetSystemTrayWindow(w)
 	return true
 }
 
 func shouldEnableTray() bool {
-	if os.Geteuid() == 0 || os.Getenv("SUDO_USER") != "" {
+	switch runtime.GOOS {
+	case "windows", "darwin":
+		return true
+	case "linux":
+		if os.Geteuid() == 0 || os.Getenv("SUDO_USER") != "" {
+			return false
+		}
+		return os.Getenv("DBUS_SESSION_BUS_ADDRESS") != ""
+	default:
 		return false
 	}
-	return os.Getenv("DBUS_SESSION_BUS_ADDRESS") != ""
 }
 
 func antennaResource(color fyne.ThemeColorName) fyne.Resource {
@@ -1076,6 +1211,16 @@ var antennaIconResource = fyne.NewStaticResource("antenna.svg", []byte(`<svg xml
 <circle cx="12" cy="9" r="2" fill="#000"/>
 <path d="M8 13a6 6 0 0 1 0-8M16 13a6 6 0 0 0 0-8M5 16a10 10 0 0 1 0-14M19 16a10 10 0 0 0 0-14" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round"/>
 </svg>`))
+
+//go:embed assets/display-icon.png
+var appIconBytes []byte
+
+var appIconResource = fyne.NewStaticResource("display-icon.png", appIconBytes)
+
+//go:embed assets/tray-icon.png
+var trayIconBytes []byte
+
+var trayIconResource = fyne.NewStaticResource("tray-icon.png", trayIconBytes)
 
 var toolsIconResource = fyne.NewStaticResource("tools.svg", []byte(`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
 <path d="M4 20l6.6-6.6" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round"/>

@@ -1,7 +1,8 @@
 (() => {
   const status = document.getElementById('status')
   const log = document.getElementById('log')
-  const serverInput = document.getElementById('server')
+  const customServerInput = document.getElementById('custom-server')
+  const serverHostInput = document.getElementById('server-host')
   const gamepadsPanel = document.getElementById('gamepads')
   const hidStatus = document.getElementById('hid-status')
   const layoutSvg = document.getElementById('layout-editor')
@@ -52,10 +53,14 @@
   let draggingLayout = null
   let currentProfile = 'default.json'
   const basePath = detectBasePath()
-
-  if (!serverInput.value) {
-    serverInput.value = location.origin + appPath('/api/input/gamepad')
+  const defaultServerHost = 'localhost:8080'
+  const serverInputEndpoint = '/api/input/gamepad'
+  const storageKeys = {
+    customServer: 'inputCastGamepad.customServer',
+    serverHost: 'inputCastGamepad.serverHost'
   }
+
+  loadServerSettings()
 
   function detectBasePath(){
     const path = location.pathname.replace(/\/+$/, '')
@@ -64,6 +69,67 @@
 
   function appPath(path){
     return (basePath || '') + path
+  }
+
+  function currentServerURL(){
+    return 'http://' + currentServerHost() + appPath(serverInputEndpoint)
+  }
+
+  function currentServerHost(){
+    if (!customServerInput.checked) return defaultServerHost
+    return normalizeServerHost(serverHostInput.value) || defaultServerHost
+  }
+
+  function loadServerSettings(){
+    const customServer = readStorage(storageKeys.customServer) === 'true'
+    const storedHost = normalizeServerHost(readStorage(storageKeys.serverHost) || defaultServerHost)
+    customServerInput.checked = customServer
+    serverHostInput.value = customServer ? storedHost : defaultServerHost
+    syncServerControls()
+  }
+
+  function saveServerSettings(){
+    writeStorage(storageKeys.customServer, customServerInput.checked ? 'true' : 'false')
+    writeStorage(storageKeys.serverHost, currentServerHost())
+  }
+
+  function syncServerControls(){
+    serverHostInput.disabled = !customServerInput.checked
+    serverHostInput.placeholder = customServerInput.checked ? '192.168.0.10 or server-name' : defaultServerHost
+    if (!customServerInput.checked) {
+      serverHostInput.value = defaultServerHost
+    }
+  }
+
+  function normalizeServerHost(value){
+    value = String(value || '').trim()
+    if (!value) return ''
+    try {
+      const url = new URL(value.includes('://') ? value : 'http://' + value)
+      if (url.host) value = url.host
+    } catch (error) {
+      value = value.replace(/^https?:\/\//i, '')
+    }
+    value = value.replace(/^https?:\/\//i, '').replace(/^\/+|\/+$/g, '')
+    if (value === 'localhost') return defaultServerHost
+    if (value.includes(':')) return value
+    return value + ':8080'
+  }
+
+  function readStorage(key){
+    try {
+      return window.localStorage.getItem(key)
+    } catch (error) {
+      return null
+    }
+  }
+
+  function writeStorage(key, value){
+    try {
+      window.localStorage.setItem(key, value)
+    } catch (error) {
+      append('settings save failed: ' + error)
+    }
   }
 
   function assetPath(path){
@@ -81,7 +147,7 @@
     const payload = JSON.stringify(state)
     if (payload === lastPayload) return
     lastPayload = payload
-    fetch(serverInput.value, {
+    fetch(currentServerURL(), {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: payload
@@ -161,7 +227,9 @@
 
   function start(){
     if (running) return
+    saveServerSettings()
     running = true
+    setServerSettingsEnabled(false)
     append('started')
     timer = window.setInterval(readGamepads, 16)
     readGamepads()
@@ -173,12 +241,18 @@
     if (timer) window.clearInterval(timer)
     timer = null
     lastPayload = ''
+    setServerSettingsEnabled(true)
     append('stopped')
+  }
+
+  function setServerSettingsEnabled(enabled){
+    customServerInput.disabled = !enabled
+    serverHostInput.disabled = !enabled || !customServerInput.checked
   }
 
   function updateVisibilityStatus(){
     if (!running || !document.hidden) return
-    status.textContent = 'Gamepad bridge is hidden. Browser Gamepad API may pause or miss inputs; keep this page visible.'
+    status.textContent = 'Gamepad client is hidden. Browser Gamepad API may pause or miss inputs; keep this page visible.'
   }
 
   function loadLayout(){
@@ -515,6 +589,15 @@
     const gamepad = findGamepad()
     append(gamepad ? 'scan found: ' + gamepad.id : 'scan found no gamepads')
   })
+  customServerInput.addEventListener('change', () => {
+    syncServerControls()
+    saveServerSettings()
+  })
+  serverHostInput.addEventListener('change', () => {
+    serverHostInput.value = normalizeServerHost(serverHostInput.value)
+    saveServerSettings()
+  })
+  serverHostInput.addEventListener('input', saveServerSettings)
   document.getElementById('hid').addEventListener('click', async event => {
     event.preventDefault()
     if (!navigator.hid) {

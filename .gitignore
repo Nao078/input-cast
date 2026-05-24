@@ -7,10 +7,13 @@
 /server
 /client
 /input-cast
+/input-cast-client
 *.exe
 *.test
 *.out
 coverage.*
+/dist/
+/.build/
 
 # Runtime uploads
 /web/overlay/uploads/*
@@ -31,3 +34,4 @@ Thumbs.db
 # Codex / local agent state
 .codex/
 .agents/
+.work/
