@@ -103,6 +103,7 @@ go build -ldflags="-H=windowsgui" -o input-cast-client.exe ./cmd/input-cast-clie
 * **詳細設定:** ボタンを**右クリック**（表示/非表示、ラベル、カラー、サイズ変更）
 * **全体変更:** `All Button Colors` から全ボタンの一括色替え
 * **保存先:** 設定は `configs/*.json` に保存され、次回起動時に自動で復元されます。
+* **入力履歴コピー:** `history.max_entries` は画面表示件数、`history.copy_max_entries` はコピーに残す履歴件数です。`copy_max_entries` は未指定時100件です。
 
 ## 🧩 コンボ表示
 

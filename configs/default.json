@@ -11,7 +11,8 @@
     "y": 120,
     "width": 330,
     "height": 860,
-    "max_entries": 24
+    "max_entries": 24,
+    "copy_max_entries": 100
   },
   "combo_display": {
     "enabled": true,

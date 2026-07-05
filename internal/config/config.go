@@ -13,13 +13,14 @@ type OverlayConfig struct {
 }
 
 type HistoryConfig struct {
-	Enabled    bool `json:"enabled"`
-	ShowBorder bool `json:"show_border"`
-	X          int  `json:"x"`
-	Y          int  `json:"y"`
-	Width      int  `json:"width"`
-	Height     int  `json:"height"`
-	MaxEntries int  `json:"max_entries"`
+	Enabled        bool `json:"enabled"`
+	ShowBorder     bool `json:"show_border"`
+	X              int  `json:"x"`
+	Y              int  `json:"y"`
+	Width          int  `json:"width"`
+	Height         int  `json:"height"`
+	MaxEntries     int  `json:"max_entries"`
+	CopyMaxEntries int  `json:"copy_max_entries"`
 }
 
 type ComboDisplayConfig struct {

@@ -6,6 +6,7 @@
   let historyList = null
   let historyMenu = null
   let historyEntries = []
+  let copyHistoryEntries = []
   let activeHistory = null
   let comboPanel = null
   let comboConfig = null
@@ -185,6 +186,7 @@
   function clearHistory(){
     activeHistory = null
     historyEntries = []
+    copyHistoryEntries = []
     renderHistory()
   }
 
@@ -284,10 +286,12 @@
     }
     activeHistory.frames = frameCount(activeHistory.startedAt, now)
     const elapsedFrames = activeHistory.frames
-    historyEntries.unshift({
+    const completedEntry = {
       frames: activeHistory.frames,
       buttons: cloneButtons(activeHistory.buttons)
-    })
+    }
+    historyEntries.unshift(completedEntry)
+    copyHistoryEntries.push(cloneHistoryEntry(completedEntry))
     trimHistory()
     activeHistory = { key, buttons: cloneButtons(state.buttons || {}), startedAt: now, frames: 1 }
     processComboInput(activeHistory.buttons, elapsedFrames)
@@ -302,6 +306,12 @@
   function trimHistory(){
     const maxEntries = (currentConfig && currentConfig.history && currentConfig.history.max_entries) || 24
     historyEntries = historyEntries.slice(0, maxEntries)
+    copyHistoryEntries = copyHistoryEntries.slice(-copyHistoryMaxEntries())
+  }
+
+  function copyHistoryMaxEntries(){
+    const value = currentConfig && currentConfig.history && Number(currentConfig.history.copy_max_entries)
+    return value > 0 ? Math.floor(value) : 100
   }
 
   function renderHistory(){
@@ -326,18 +336,34 @@
   }
 
   function historyRowsChronological(){
-    const rows = historyEntries.slice().reverse().map(entry => ({
-      frames: entry.frames,
-      buttons: entry.buttons
-    }))
+    const rows = copyHistoryEntries.map(cloneHistoryEntry)
     if (activeHistory) {
-      rows.push({ frames: activeHistory.frames || 1, buttons: activeHistory.buttons })
+      rows.push({ frames: activeHistory.frames || 1, buttons: cloneButtons(activeHistory.buttons) })
     }
-    return rows
+    return rows.slice(-copyHistoryMaxEntries())
+  }
+
+  function cloneHistoryEntry(entry){
+    return {
+      frames: entry.frames,
+      buttons: cloneButtons(entry.buttons || {})
+    }
   }
 
   function historyMarkdownTable(){
-    return historyMarkdownFromRows(historyRowsChronological())
+    return historyCopyTextFromRows(historyRowsChronological())
+  }
+
+  function historyCopyTextFromRows(rows){
+    return historyCopyDescription().concat([historyMarkdownFromRows(rows)]).join('\n\n')
+  }
+
+  function historyCopyDescription(){
+    return [
+      '入力履歴は上から下へ、古い入力から新しい入力の順に並んでいます。',
+      '方向はテンキー表記です。5=ニュートラル、1=左下、2=下、3=右下、4=左、6=右、7=左上、8=上、9=右上です。',
+      '方向とボタン、または複数ボタンの同時押しは + でつなぎます。'
+    ]
   }
 
   function historyMarkdownFromRows(rows){
@@ -1380,6 +1406,8 @@
     comboAudioVolume,
     intersects,
     historyCommandText,
+    copyHistoryMaxEntries,
+    historyCopyTextFromRows,
     historyMarkdownFromRows,
     processComboInput,
     unlockAudio,
