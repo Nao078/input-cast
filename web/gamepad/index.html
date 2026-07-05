@@ -15,6 +15,9 @@
     .server-settings{display:grid;gap:8px;margin-top:12px;max-width:420px}
     .server-settings label{display:flex;align-items:center;gap:8px}
     .server-settings input[type="text"]{box-sizing:border-box;width:100%;background:#111;color:#f5f5f5;border:1px solid #555}
+    .combo-form{display:grid;grid-template-columns:130px minmax(180px,1fr);gap:8px;align-items:center}
+    .combo-form select,.combo-form input[type="file"]{box-sizing:border-box;width:100%;padding:6px;background:#111;color:#f5f5f5;border:1px solid #555}
+    .combo-form input[type="checkbox"]{justify-self:start}
     .btn{display:inline-block;padding:8px 12px;background:#007ACC;color:#fff;border-radius:6px;text-decoration:none}
     .btn.secondary{background:#666;margin-left:8px}
     .btn.warning{background:#955f00;margin-left:8px}
@@ -43,6 +46,7 @@
 <body>
   <h2>Gamepad Input Bridge</h2>
   <div id="status">Connect GP2040-CE, press a button, then click Start.</div>
+  <div id="facing-status">Facing: 右向き (1P)</div>
   <div class="server-settings">
     <strong>Server</strong>
     <label><input id="custom-server" type="checkbox"> Use another server</label>
@@ -67,6 +71,35 @@
       <h3>Hints</h3>
       <div>Windowsで <code>joy.cpl</code> を開き、GP2040-CEが見えるか確認してください。</div>
       <div>見えない場合はGP2040-CEの入力モードを XInput / DInput / Switch で切り替えて試してください。</div>
+    </section>
+    <section class="panel">
+      <h3>Combo</h3>
+      <div class="combo-form">
+        <label for="combo-file">File</label>
+        <select id="combo-file"></select>
+        <label for="combo-set">Set</label>
+        <select id="combo-set"></select>
+        <label for="combo-mode">Mode</label>
+        <select id="combo-mode">
+          <option value="focus">focus</option>
+          <option value="playlist">playlist</option>
+          <option value="auto_detect">auto_detect</option>
+        </select>
+        <label for="combo-recipe">Recipe</label>
+        <select id="combo-recipe"></select>
+        <label for="combo-practice-set">Practice Set</label>
+        <select id="combo-practice-set"></select>
+        <label for="combo-loop">Loop</label>
+        <input id="combo-loop" type="checkbox">
+        <label for="combo-advance">Advance</label>
+        <input id="combo-advance" type="checkbox">
+        <label for="combo-upload">Upload</label>
+        <input id="combo-upload" type="file" accept=".yaml,.yml">
+      </div>
+      <div style="margin-top:10px">
+        <a id="combo-reload" class="btn secondary" href="#">Reload</a>
+      </div>
+      <div id="combo-status" style="margin-top:8px;color:#ddd">No combo YAML loaded.</div>
     </section>
   </div>
   <section class="panel">
@@ -100,6 +133,10 @@
         <input id="layout-bg-image" type="text" placeholder="/path-or-url.png">
         <label for="layout-bg-upload">Upload</label>
         <input id="layout-bg-upload" type="file" accept="image/*">
+        <label for="combo-audio-volume">Sound</label>
+        <input id="combo-audio-volume" type="range" min="0" max="100" step="1">
+        <div></div>
+        <div id="combo-audio-volume-label" class="editor-note">Volume: 70%</div>
         <label for="layout-x">X</label>
         <input id="layout-x" type="number" step="1">
         <label for="layout-y">Y</label>

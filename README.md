@@ -2,6 +2,13 @@
 
 GP2040-CE系レバーレスコントローラーの入力をブラウザやOBSに表示するためのツールです。
 
+## 安全方針
+
+input-cast はゲームプロセス、ゲームメモリ、描画APIにアクセスしません。
+入力デバイスから取得した入力状態を、配信・練習用に可視化する外部ツールです。
+
+自動入力、マクロ、入力補正、ゲーム状態解析、メモリ読み取りは行いません。
+
 ## 💡 最もおすすめの構成（推奨環境）
 本ツールは、**「サーバー」を裏で動かし、「Input Cast Client（専用アプリ）」で入力をキャプチャする構成**が最も安定するため推奨されています。
 
@@ -97,6 +104,95 @@ go build -ldflags="-H=windowsgui" -o input-cast-client.exe ./cmd/input-cast-clie
 * **全体変更:** `All Button Colors` から全ボタンの一括色替え
 * **保存先:** 設定は `configs/*.json` に保存され、次回起動時に自動で復元されます。
 
+## 🧩 コンボ表示
+
+Input Cast Client の **Combo** セクションから YAML をアップロードすると、overlay の入力履歴右側にコンボ成立状況を表示できます。
+
+```yaml
+version: 1
+game: "Street Fighter 6"
+character: "Ryu"
+
+commands:
+  - id: hadoken
+    name: "波動拳"
+    notation: "236P"
+    maxGapFrames: 8
+
+moves:
+  - id: ryu_5lp
+    name: "立ち弱P"
+    notation: "5LP"
+    input: "5LP"
+    tags: ["normal", "light"]
+    startup: 4
+    active: 3
+    recovery: 7
+    cancelWindows:
+      - type: "chain"
+        start: 8
+        end: 18
+        targetTags: ["light"]
+      - type: "special"
+        start: 10
+        end: 22
+        targetTags: ["special"]
+
+  - id: ryu_2lk
+    name: "しゃがみ弱K"
+    notation: "2LK"
+    input: "2LK"
+    tags: ["normal", "light"]
+    startup: 5
+    active: 2
+    recovery: 10
+    cancelWindows:
+      - type: "chain"
+        start: 8
+        end: 18
+        targetTags: ["light"]
+
+  - id: ryu_hadoken
+    name: "波動拳"
+    notation: "236P"
+    command: "hadoken"
+    tags: ["special"]
+
+recipes:
+  - id: ryu_basic_001
+    name: "基本: 立ち弱P > しゃがみ弱K > 立ち弱P > 波動拳"
+    notation: "LP > 2LK > LP > 236P"
+    steps:
+      - move: "ryu_5lp"
+      - move: "ryu_2lk"
+      - move: "ryu_5lp"
+      - move: "ryu_hadoken"
+    priority: 10
+
+practice:
+  mode: "focus"
+  activeRecipe: "ryu_basic_001"
+
+practiceSets:
+  - id: ryu_beginner
+    name: "リュウ基本練習"
+    mode: "playlist"
+    recipes:
+      - ryu_basic_001
+    loop: true
+    advanceOnComplete: true
+```
+
+`commands` は `236P` / `623P` などのコマンド入力成立判定、`moves` は技名・入力・タグ・キャンセル可能タイミング、`recipes` は overlay に表示するコンボです。`commands[].maxGapFrames` は `236P` のようなコマンド内部の方向入力猶予、`moves[].cancelWindows` は技データ由来の標準受付フレームです。
+
+Step 間のタイミング判定は `move.cancelWindows` を使います。前後の step が move 参照ではない場合や、該当する cancel window がない場合は、従来の単純順序判定にフォールバックします。
+
+`input` と `commands[].notation` は `236HP` のような短縮表記に対応します。方向はテンキー表記、ボタンは `configs/*.json` の `id` / `label` / `history_label` に加えて、`LP` / `MP` / `HP` / `LK` / `MK` / `HK` / `P` / `K` の標準エイリアスを使えます。
+
+input-cast はゲームプロセス、ゲームメモリ、描画APIにアクセスしません。入力デバイスから取得した入力状態と YAML の技データをもとに、入力上のコマンド成立・レシピ進行・タイミングを可視化します。ゲーム内のヒット成否、ガード、距離、ジャグル状態は判定しません。
+
+OBS/Preview に表示するレシピは原則1つです。`practice.mode: "focus"` では `activeRecipe` を表示し、`practice.mode: "playlist"` では `activeSet` の playlist から現在の1レシピを表示します。
+
 ---
 
 ## ❓ 動かない時のトラブルシューティング
@@ -133,6 +229,9 @@ sudo usermod -a -G input "$USER"
 | `POST` | `/api/config` | 設定JSONを保存 |
 | `GET` | `/api/config/profiles` | プロファイル一覧取得 |
 | `POST` | `/api/config/profile` | プロファイル切り替え |
+| `GET` | `/api/combos` | コンボYAML/セット一覧と現在選択を取得 |
+| `POST` | `/api/combos/upload` | コンボYAMLをアップロード |
+| `POST` | `/api/combos/active` | アクティブなコンボセットを切り替え |
 | `POST` | `/api/input/gamepad` | Bridgeからの入力送信レシーバー |
 
 **Mock（テスト用）入力送信例:**

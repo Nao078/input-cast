@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strings"
@@ -178,6 +180,16 @@ func (c *Client) SaveOverlayConfig(ctx context.Context, cfg *OverlayConfig, prof
 	if err != nil {
 		return err
 	}
+	comboDisplay, err := json.Marshal(cfg.ComboDisplay)
+	if err != nil {
+		return err
+	}
+	comboAudio, err := json.Marshal(cfg.ComboAudio)
+	if err != nil {
+		return err
+	}
+	raw["combo_display"] = comboDisplay
+	raw["combo_audio"] = comboAudio
 	raw["controller"] = controller
 	raw["buttons"] = buttons
 
@@ -270,8 +282,110 @@ func (c *Client) SwitchProfile(ctx context.Context, profile string) (string, err
 	return payload.Current, nil
 }
 
+func (c *Client) FetchCombos(ctx context.Context) (*ComboResponse, error) {
+	endpoint, err := comboEndpoint(c.URL())
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+	res, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		return nil, fmt.Errorf("combos returned %s", res.Status)
+	}
+	var combos ComboResponse
+	if err := json.NewDecoder(res.Body).Decode(&combos); err != nil {
+		return nil, err
+	}
+	return &combos, nil
+}
+
+func (c *Client) ActivateCombo(ctx context.Context, file, setID string) error {
+	return c.ActivateComboSelection(ctx, ComboSelection{File: file, SetID: setID})
+}
+
+func (c *Client) ActivateComboSelection(ctx context.Context, selection ComboSelection) error {
+	endpoint, err := comboActiveEndpoint(c.URL())
+	if err != nil {
+		return err
+	}
+	selection.File = strings.TrimSpace(selection.File)
+	selection.SetID = strings.TrimSpace(selection.SetID)
+	selection.ActiveRecipe = strings.TrimSpace(selection.ActiveRecipe)
+	selection.ActiveSet = strings.TrimSpace(selection.ActiveSet)
+	body, err := json.Marshal(selection)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	res, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		return fmt.Errorf("combo activate returned %s", res.Status)
+	}
+	return nil
+}
+
+func (c *Client) UploadCombo(ctx context.Context, filename string, body []byte) error {
+	endpoint, err := comboUploadEndpoint(c.URL())
+	if err != nil {
+		return err
+	}
+	var payload bytes.Buffer
+	writer := multipart.NewWriter(&payload)
+	part, err := writer.CreateFormFile("combo", filename)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(part, bytes.NewReader(body)); err != nil {
+		return err
+	}
+	if err := writer.Close(); err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, &payload)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	res, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		return fmt.Errorf("combo upload returned %s", res.Status)
+	}
+	return nil
+}
+
 func configEndpoint(raw string) (string, error) {
 	return apiEndpoint(raw, "/api/config")
+}
+
+func comboEndpoint(raw string) (string, error) {
+	return apiEndpoint(raw, "/api/combos")
+}
+
+func comboUploadEndpoint(raw string) (string, error) {
+	return apiEndpoint(raw, "/api/combos/upload")
+}
+
+func comboActiveEndpoint(raw string) (string, error) {
+	return apiEndpoint(raw, "/api/combos/active")
 }
 
 func profileListEndpoint(raw string) (string, error) {
@@ -320,6 +434,16 @@ func decodeRawConfig(raw map[string]json.RawMessage, cfg *OverlayConfig) error {
 	}
 	if value, ok := raw["controller"]; ok {
 		if err := json.Unmarshal(value, &cfg.Controller); err != nil {
+			return err
+		}
+	}
+	if value, ok := raw["combo_display"]; ok {
+		if err := json.Unmarshal(value, &cfg.ComboDisplay); err != nil {
+			return err
+		}
+	}
+	if value, ok := raw["combo_audio"]; ok {
+		if err := json.Unmarshal(value, &cfg.ComboAudio); err != nil {
 			return err
 		}
 	}

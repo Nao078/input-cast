@@ -22,3 +22,24 @@ html,body{height:100%;margin:0;background:transparent;overflow:hidden}
 .history-row.live .history-direction{filter:drop-shadow(0 0 5px rgba(255,255,255,0.36)) drop-shadow(0 2px 3px rgba(0,0,0,0.62))}
 .history-row.live .history-direction-text{color:#fff;filter:none}
 .history-row.live .history-button,.history-row.live .history-neutral{box-shadow:inset 0 0 0 1px rgba(255,255,255,0.36),0 0 7px rgba(255,255,255,0.2),0 2px 4px rgba(0,0,0,0.62)}
+.combo-display{position:absolute;z-index:3;box-sizing:border-box;border:3px solid rgba(255,255,255,0.22);border-radius:8px;background:linear-gradient(90deg,rgba(25,16,38,0.58),rgba(18,12,28,0.18) 72%,rgba(0,0,0,0));overflow:visible;color:#fff;text-shadow:0 2px 4px rgba(0,0,0,0.68)}
+.combo-display.combo-frameless{border-color:transparent;background:transparent}
+.combo-header{display:none}
+.combo-list{display:flex;flex-direction:column;gap:8px;box-sizing:border-box;width:100%;height:100%;padding:12px 12px 14px;overflow:visible}
+.combo-empty{font-size:18px;font-weight:800;color:rgba(255,255,255,0.72)}
+.combo-row{position:relative;box-sizing:border-box;padding:0;border-radius:0;background:transparent}
+.combo-row.combo-complete{filter:drop-shadow(0 0 10px rgba(230,70,255,0.38))}
+.combo-name{box-sizing:border-box;max-width:100%;padding:0 0 8px 0;color:#f6d4ff;font-size:20px;font-weight:900;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 7px rgba(220,100,255,0.82),0 2px 4px rgba(0,0,0,0.78)}
+.combo-steps{display:flex;flex-direction:column;gap:5px}
+.combo-step{position:relative;display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;min-height:34px;box-sizing:border-box;padding:5px 10px 5px 0;border-radius:0;background:transparent;color:rgba(255,255,255,0.76);font-size:15px;font-weight:900;line-height:1.05;box-shadow:none}
+.combo-step::after{content:"";position:absolute;left:34px;right:0;bottom:0;height:1px;background:linear-gradient(90deg,rgba(225,180,255,0.2),rgba(225,180,255,0))}
+.combo-step.current{background:linear-gradient(90deg,rgba(76,30,115,0.96),rgba(50,26,92,0.9) 62%,rgba(50,26,92,0));color:#fff;box-shadow:inset 0 0 0 1px rgba(212,170,255,0.52),0 0 12px rgba(174,85,255,0.38)}
+.combo-step.done{background:linear-gradient(90deg,rgba(171,92,235,0.48),rgba(155,74,220,0.3) 72%,rgba(155,74,220,0));color:rgba(255,255,255,0.92)}
+.combo-step.failed{background:linear-gradient(90deg,rgba(95,22,34,0.96),rgba(98,26,42,0.78) 64%,rgba(98,26,42,0));color:#fff;box-shadow:inset 0 0 0 1px rgba(255,110,130,0.64),0 0 10px rgba(255,50,80,0.28)}
+.combo-cursor{display:flex;align-items:center;justify-content:center;color:#ffc9ff;font-size:28px;font-weight:900;line-height:1;text-shadow:0 0 7px rgba(255,80,255,0.9),0 2px 3px rgba(0,0,0,0.85)}
+.combo-step-body{display:flex;align-items:center;gap:8px;min-width:0}
+.combo-step-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.combo-step-notation{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:20px;box-sizing:border-box;padding:0 6px;border-radius:3px;background:rgba(20,20,28,0.56);color:#f3ecff;font-size:12px;font-weight:900;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.18)}
+.combo-success{display:none;position:absolute;left:calc(100% + 36px);top:50%;transform:translateY(-50%);padding:0 10px;color:#f4a8ff;font-size:52px;font-weight:900;letter-spacing:0;text-shadow:0 0 5px #f246ff,0 0 13px rgba(242,70,255,0.92),0 0 25px rgba(242,70,255,0.7),0 3px 4px rgba(0,0,0,0.9);white-space:nowrap}
+.combo-success.show{display:block;animation:combo-success-vanish 1.5s steps(2,end) forwards}
+@keyframes combo-success-vanish{0%{opacity:1;filter:brightness(1.2)}16%{opacity:0.22;filter:brightness(0.8)}32%{opacity:1;filter:brightness(1.2)}48%{opacity:0.26;filter:brightness(0.82)}64%{opacity:1;filter:brightness(1.15)}82%{opacity:0.35;filter:brightness(0.9)}100%{opacity:0;filter:brightness(0.7)}}

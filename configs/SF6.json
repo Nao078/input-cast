@@ -13,6 +13,14 @@
     "height": 880,
     "max_entries": 24
   },
+  "combo_display": {
+    "enabled": true,
+    "x": 308,
+    "y": 120,
+    "width": 420,
+    "height": 520,
+    "show_border": false
+  },
   "controller": {
     "x": 855,
     "y": 950,

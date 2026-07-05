@@ -6,11 +6,23 @@
   },
   "history": {
     "enabled": true,
+    "show_border": false,
     "x": 60,
-    "y": 100,
+    "y": 120,
     "width": 330,
-    "height": 880,
+    "height": 860,
     "max_entries": 24
+  },
+  "combo_display": {
+    "enabled": true,
+    "x": 368,
+    "y": 120,
+    "width": 420,
+    "height": 520,
+    "show_border": true
+  },
+  "combo_audio": {
+    "volume": 0.7
   },
   "controller": {
     "x": 855,

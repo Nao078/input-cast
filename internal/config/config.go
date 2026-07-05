@@ -22,6 +22,19 @@ type HistoryConfig struct {
 	MaxEntries int  `json:"max_entries"`
 }
 
+type ComboDisplayConfig struct {
+	Enabled    bool `json:"enabled"`
+	ShowBorder bool `json:"show_border"`
+	X          int  `json:"x"`
+	Y          int  `json:"y"`
+	Width      int  `json:"width"`
+	Height     int  `json:"height"`
+}
+
+type ComboAudioConfig struct {
+	Volume float64 `json:"volume"`
+}
+
 type ControllerConfig struct {
 	X      int    `json:"x"`
 	Y      int    `json:"y"`
@@ -47,11 +60,13 @@ type ButtonDef struct {
 }
 
 type Config struct {
-	Overlay    OverlayConfig                `json:"overlay"`
-	History    HistoryConfig                `json:"history"`
-	Controller ControllerConfig             `json:"controller"`
-	Buttons    []ButtonDef                  `json:"buttons"`
-	Mappings   map[string]map[string]string `json:"mappings,omitempty"`
+	Overlay      OverlayConfig                `json:"overlay"`
+	History      HistoryConfig                `json:"history"`
+	ComboDisplay ComboDisplayConfig           `json:"combo_display"`
+	ComboAudio   ComboAudioConfig             `json:"combo_audio"`
+	Controller   ControllerConfig             `json:"controller"`
+	Buttons      []ButtonDef                  `json:"buttons"`
+	Mappings     map[string]map[string]string `json:"mappings,omitempty"`
 }
 
 func Load(path string) (*Config, error) {

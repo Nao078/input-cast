@@ -1,10 +1,20 @@
 (() => {
   const status = document.getElementById('status')
+  const facingStatus = document.getElementById('facing-status')
   const log = document.getElementById('log')
   const customServerInput = document.getElementById('custom-server')
   const serverHostInput = document.getElementById('server-host')
   const gamepadsPanel = document.getElementById('gamepads')
   const hidStatus = document.getElementById('hid-status')
+  const comboFile = document.getElementById('combo-file')
+  const comboSet = document.getElementById('combo-set')
+  const comboMode = document.getElementById('combo-mode')
+  const comboRecipe = document.getElementById('combo-recipe')
+  const comboPracticeSet = document.getElementById('combo-practice-set')
+  const comboLoop = document.getElementById('combo-loop')
+  const comboAdvance = document.getElementById('combo-advance')
+  const comboUpload = document.getElementById('combo-upload')
+  const comboStatus = document.getElementById('combo-status')
   const layoutSvg = document.getElementById('layout-editor')
   const layoutTarget = document.getElementById('layout-target')
   const layoutStatus = document.getElementById('layout-status')
@@ -19,6 +29,8 @@
     bgColor: document.getElementById('layout-bg-color'),
     bgImage: document.getElementById('layout-bg-image'),
     bgUpload: document.getElementById('layout-bg-upload'),
+    comboAudioVolume: document.getElementById('combo-audio-volume'),
+    comboAudioVolumeLabel: document.getElementById('combo-audio-volume-label'),
     x: document.getElementById('layout-x'),
     y: document.getElementById('layout-y'),
     size: document.getElementById('layout-size'),
@@ -52,6 +64,10 @@
   let selectedLayout = 'controller'
   let draggingLayout = null
   let currentProfile = 'default.json'
+  let comboState = null
+  let comboLoading = false
+  let facingRight = true
+  let facingToggleDown = false
   const basePath = detectBasePath()
   const defaultServerHost = 'localhost:8080'
   const serverInputEndpoint = '/api/input/gamepad'
@@ -168,9 +184,11 @@
     }
     renderGamepads()
     status.textContent = 'Reading: ' + gamepad.id
+    const buttons = normalizeButtons(gamepad)
+    updateFacingFromButtons(buttons)
     sendState({
       device_id: 'gamepad',
-      buttons: normalizeButtons(gamepad)
+      buttons
     })
   }
 
@@ -223,6 +241,18 @@
       buttons.down = buttons.down || gamepad.axes[1] > 0.5
     }
     return buttons
+  }
+
+  function updateFacingFromButtons(buttons){
+    const pressed = !!(buttons && buttons.up && (buttons.s1 || buttons.ba || buttons.BA || buttons.back || buttons.BACK))
+    if (!pressed) {
+      facingToggleDown = false
+      return
+    }
+    if (facingToggleDown) return
+    facingToggleDown = true
+    facingRight = !facingRight
+    facingStatus.textContent = facingRight ? 'Facing: 右向き (1P)' : 'Facing: 左向き (2P)'
   }
 
   function start(){
@@ -327,6 +357,12 @@
     }
     if (!config.controller.image) {
       config.controller.image = ''
+    }
+    if (!config.combo_audio || typeof config.combo_audio !== 'object') {
+      config.combo_audio = { volume: 0.7 }
+    }
+    if (!Number.isFinite(Number(config.combo_audio.volume))) {
+      config.combo_audio.volume = 0.7
     }
     if (!Array.isArray(config.buttons) || config.buttons.length === 0) {
       config.buttons = defaultLayoutButtons()
@@ -465,6 +501,9 @@
     layoutInputs.bgImage.disabled = !!button
     layoutInputs.bgImage.value = button ? '' : (layoutConfig.controller.image || '')
     layoutInputs.bgUpload.disabled = !!button
+    const volume = Math.max(0, Math.min(1, Number(layoutConfig.combo_audio && layoutConfig.combo_audio.volume) || 0.7))
+    layoutInputs.comboAudioVolume.value = Math.round(volume * 100)
+    layoutInputs.comboAudioVolumeLabel.textContent = 'Volume: ' + Math.round(volume * 100) + '%'
     layoutInputs.x.value = target.x
     layoutInputs.y.value = target.y
     layoutInputs.size.disabled = !button
@@ -494,6 +533,9 @@
       target.width = Math.max(1, numberValue(layoutInputs.width, target.width))
       target.height = Math.max(1, numberValue(layoutInputs.height, target.height))
     }
+    layoutConfig.combo_audio = layoutConfig.combo_audio || {}
+    layoutConfig.combo_audio.volume = Math.max(0, Math.min(100, numberValue(layoutInputs.comboAudioVolume, 70))) / 100
+    layoutInputs.comboAudioVolumeLabel.textContent = 'Volume: ' + Math.round(layoutConfig.combo_audio.volume * 100) + '%'
     renderLayoutEditor()
     updateLayoutForm()
   }
@@ -560,6 +602,173 @@
     }).catch(error => {
       layoutStatus.textContent = 'Upload failed: ' + error
     })
+  }
+
+  function loadCombos(){
+    fetch(appPath('/api/combos'))
+      .then(response => {
+        if (!response.ok) throw new Error(response.status)
+        return response.json()
+      })
+      .then(data => applyCombos(data))
+      .catch(error => {
+        comboStatus.textContent = 'Combo load failed: ' + error
+        append('combo load failed: ' + error)
+      })
+  }
+
+  function applyCombos(data){
+    comboLoading = true
+    comboState = data || null
+    const files = comboState && Array.isArray(comboState.files) ? comboState.files : []
+    comboFile.innerHTML = files.map(file => optionHTML(file.file, file.title || file.file)).join('')
+    if (files.length === 0) {
+      comboSet.innerHTML = ''
+      comboRecipe.innerHTML = ''
+      comboPracticeSet.innerHTML = ''
+      comboStatus.textContent = 'No combo YAML loaded.'
+      comboLoading = false
+      return
+    }
+    comboFile.value = (comboState.current && comboState.current.file) || files[0].file
+    fillComboSets()
+    if (comboState.current && comboState.current.set_id) comboSet.value = comboState.current.set_id
+    fillPracticeControls()
+    comboLoading = false
+    updateComboStatus()
+  }
+
+  function fillComboSets(){
+    const file = selectedComboFile()
+    comboSet.innerHTML = file ? file.sets.map(set => optionHTML(set.id, set.name || set.id)).join('') : ''
+    if (file && comboState.current && comboState.current.file === file.file) {
+      comboSet.value = comboState.current.set_id || comboSet.value
+    }
+  }
+
+  function fillPracticeControls(){
+    const active = (comboState && comboState.activePractice) || {}
+    comboMode.value = active.mode || 'focus'
+    const recipes = comboRecipeOptions()
+    comboRecipe.innerHTML = recipes.map(recipe => optionHTML(recipe.id, recipe.name || recipe.id)).join('')
+    if (recipes.some(recipe => recipe.id === active.activeRecipeId)) {
+      comboRecipe.value = active.activeRecipeId
+    }
+    const sets = comboState && Array.isArray(comboState.practiceSets) ? comboState.practiceSets : []
+    comboPracticeSet.innerHTML = sets.map(set => optionHTML(set.id, set.name || set.id)).join('')
+    if (sets.some(set => set.id === active.activeSetId)) {
+      comboPracticeSet.value = active.activeSetId
+    }
+    applySelectedPracticeSet()
+  }
+
+  function activateSelectedCombo(){
+    if (comboLoading) return
+    const file = comboFile.value
+    const setId = comboSet.value
+    if (!file || !setId) return
+    const body = selectedComboPayload(file, setId)
+    comboStatus.textContent = 'Changing combo...'
+    fetch(appPath('/api/combos/active'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    }).then(response => {
+      if (!response.ok) throw new Error(response.status)
+      return response.json()
+    }).then(() => loadCombos()).catch(error => {
+      comboStatus.textContent = 'Combo activate failed: ' + error
+      append('combo activate failed: ' + error)
+    })
+  }
+
+  function selectedComboPayload(file, setId){
+    const payload = {
+      file,
+      set_id: setId,
+      mode: comboMode.value || 'focus',
+      activeRecipe: comboRecipe.value || '',
+      activeSet: comboPracticeSet.value || '',
+      activeSetIndex: 0,
+      loop: comboLoop.checked,
+      advanceOnComplete: comboAdvance.checked
+    }
+    const practiceSet = selectedPracticeSet()
+    if (practiceSet && Array.isArray(practiceSet.recipes)) {
+      const index = practiceSet.recipes.indexOf(payload.activeRecipe)
+      payload.activeSetIndex = index >= 0 ? index : 0
+    }
+    return payload
+  }
+
+  function uploadCombo(){
+    const file = comboUpload.files && comboUpload.files[0]
+    if (!file) return
+    const body = new FormData()
+    body.append('combo', file)
+    comboStatus.textContent = 'Uploading combo...'
+    fetch(appPath('/api/combos/upload'), {
+      method: 'POST',
+      body
+    }).then(response => {
+      if (!response.ok) throw new Error(response.status)
+      return response.json()
+    }).then(() => {
+      comboUpload.value = ''
+      loadCombos()
+    }).catch(error => {
+      comboStatus.textContent = 'Combo upload failed: ' + error
+      append('combo upload failed: ' + error)
+    })
+  }
+
+  function updateComboStatus(){
+    const file = selectedComboFile()
+    const set = selectedComboSet()
+    if (!file || !set) {
+      comboStatus.textContent = 'Select combo file and set.'
+      return
+    }
+    comboStatus.textContent = (set.name || set.id) + ' (' + (set.mode || 'command') + ')'
+  }
+
+  function selectedComboFile(){
+    const files = comboState && Array.isArray(comboState.files) ? comboState.files : []
+    return files.find(file => file.file === comboFile.value) || null
+  }
+
+  function selectedComboSet(){
+    const file = selectedComboFile()
+    const sets = file && Array.isArray(file.sets) ? file.sets : []
+    return sets.find(set => set.id === comboSet.value) || null
+  }
+
+  function selectedPracticeSet(){
+    const sets = comboState && Array.isArray(comboState.practiceSets) ? comboState.practiceSets : []
+    return sets.find(set => set.id === comboPracticeSet.value) || null
+  }
+
+  function applySelectedPracticeSet(){
+    const set = selectedPracticeSet()
+    if (!set) {
+      comboLoop.checked = false
+      comboAdvance.checked = false
+      return
+    }
+    comboLoop.checked = !!set.loop
+    comboAdvance.checked = !!set.advanceOnComplete
+    if (Array.isArray(set.recipes) && set.recipes.length > 0 && !set.recipes.includes(comboRecipe.value)) {
+      comboRecipe.value = set.recipes[0]
+    }
+  }
+
+  function comboRecipeOptions(){
+    const set = comboState && comboState.active_set
+    return set && Array.isArray(set.combos) ? set.combos : []
+  }
+
+  function optionHTML(value, label){
+    return '<option value="' + escapeHTML(value) + '">' + escapeHTML(label) + '</option>'
   }
 
   function svgPoint(event){
@@ -652,6 +861,24 @@
     event.preventDefault()
     saveLayout()
   })
+  comboFile.addEventListener('change', () => {
+    fillComboSets()
+    activateSelectedCombo()
+  })
+  comboSet.addEventListener('change', activateSelectedCombo)
+  comboMode.addEventListener('change', activateSelectedCombo)
+  comboRecipe.addEventListener('change', activateSelectedCombo)
+  comboPracticeSet.addEventListener('change', () => {
+    applySelectedPracticeSet()
+    activateSelectedCombo()
+  })
+  comboLoop.addEventListener('change', activateSelectedCombo)
+  comboAdvance.addEventListener('change', activateSelectedCombo)
+  comboUpload.addEventListener('change', uploadCombo)
+  document.getElementById('combo-reload').addEventListener('click', event => {
+    event.preventDefault()
+    loadCombos()
+  })
   layoutSvg.addEventListener('pointerdown', event => {
     const targetId = event.target.dataset && event.target.dataset.target
     if (!targetId || !layoutConfig) return
@@ -705,6 +932,7 @@
   window.setInterval(renderGamepads, 1000)
   renderGamepads()
   loadLayout()
+  loadCombos()
 
   function escapeHTML(value){
     return String(value).replace(/[&<>"']/g, ch => ({

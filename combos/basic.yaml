@@ -1,0 +1,1509 @@
+version: 1
+game: "Street Fighter 6"
+character: "Ryu"
+title: "Ryu Full Frame Data Sample"
+
+# input-cast checks input history only. It does not know whether a move hit,
+# was blocked, whiffed, reached the opponent, counter hit, or juggled.
+
+commands:
+  - id: hadoken_lp
+    name: "弱 波動拳"
+    notation: "236LP"
+    sequence: [{dir: 2}, {dir: 3}, {dir: 6}, {button: LP, requirePress: true}]
+    maxFrames: 20
+    maxGapFrames: 8
+    priority: 10
+    cooldownFrames: 15
+  - id: shoryuken_hp
+    name: "強 昇龍拳"
+    notation: "623HP"
+    sequence: [{dir: 6}, {dir: 2}, {dir: 3}, {button: HP, requirePress: true}]
+    maxFrames: 20
+    maxGapFrames: 8
+    priority: 9
+    cooldownFrames: 15
+
+moves:
+  - id: ryu_5lp
+    name: "立ち弱P（ジャブ）"
+    notation: "5LP"
+    category: "通常技"
+    strength: "弱"
+    input: "5LP"
+    tags: ["normal", "light"]
+    startup: 4
+    active: 3
+    recovery: 7
+    activeFrames: "4-6"
+    recoveryFrames: "7"
+    hitAdvantage: "4"
+    guardAdvantage: "-1"
+    cancel: "C"
+    damage: "300"
+    comboScaling: ["始動補正20%"]
+    driveGaugeGainHit: "250"
+    driveGaugeLossGuard: "-500"
+    driveGaugeLossPunishCounter: "-2000"
+    superArtGaugeGain: "300"
+    attribute: "上"
+    notes: ["連打キャンセル対応"]
+    cancelWindows:
+      - {type: "chain", start: 4, end: 16, targetTags: ["light"]}
+      - {type: "special", start: 4, end: 18, targetTags: ["special"]}
+  - id: ryu_5lk
+    name: "立ち弱K（ローキック）"
+    notation: "5LK"
+    category: "通常技"
+    strength: "弱"
+    input: "5LK"
+    tags: ["normal", "light"]
+    startup: 5
+    active: 3
+    recovery: 11
+    activeFrames: "5-7"
+    recoveryFrames: "11"
+    hitAdvantage: "2"
+    guardAdvantage: "-4"
+    cancel: "C"
+    damage: "300"
+    comboScaling: ["始動補正20%"]
+    driveGaugeGainHit: "250"
+    driveGaugeLossGuard: "-500"
+    driveGaugeLossPunishCounter: "-2000"
+    superArtGaugeGain: "300"
+    attribute: "上"
+    cancelWindows:
+      - {type: "chain", start: 5, end: 17, targetTags: ["light"]}
+      - {type: "special", start: 5, end: 19, targetTags: ["special"]}
+  - id: ryu_5mp
+    name: "立ち中P（鉤突き）"
+    notation: "5MP"
+    category: "通常技"
+    strength: "中"
+    input: "5MP"
+    tags: ["normal", "medium"]
+    startup: 6
+    active: 4
+    recovery: 11
+    activeFrames: "6-9"
+    recoveryFrames: "11"
+    hitAdvantage: "7"
+    guardAdvantage: "-1"
+    cancel: "C"
+    damage: "600"
+    driveGaugeGainHit: "1500"
+    driveGaugeLossGuard: "-3000"
+    driveGaugeLossPunishCounter: "-4000"
+    superArtGaugeGain: "500"
+    attribute: "上"
+    notes: ["空振り時硬直2F増加"]
+    cancelWindows:
+      - {type: "special", start: 6, end: 20, targetTags: ["special"]}
+  - id: ryu_5mk
+    name: "立ち中K（横蹴り）"
+    notation: "5MK"
+    category: "通常技"
+    strength: "中"
+    input: "5MK"
+    tags: ["normal", "medium"]
+    startup: 9
+    active: 3
+    recovery: 18
+    activeFrames: "9-11"
+    recoveryFrames: "18"
+    hitAdvantage: "4"
+    guardAdvantage: "-4"
+    damage: "700"
+    driveGaugeGainHit: "2000"
+    driveGaugeLossGuard: "-4000"
+    driveGaugeLossPunishCounter: "-6000"
+    superArtGaugeGain: "700"
+    attribute: "上"
+  - id: ryu_5hp
+    name: "立ち強P（正拳突き）"
+    notation: "5HP"
+    category: "通常技"
+    strength: "強"
+    input: "5HP"
+    tags: ["normal", "heavy"]
+    startup: 10
+    active: 5
+    recovery: 18
+    activeFrames: "10-14"
+    recoveryFrames: "18"
+    hitAdvantage: "4"
+    guardAdvantage: "-2"
+    cancel: "C"
+    damage: "800"
+    driveGaugeGainHit: "2000"
+    driveGaugeLossGuard: "-5000"
+    driveGaugeLossPunishCounter: "-8000"
+    superArtGaugeGain: "1000"
+    attribute: "上"
+    notes: ["強制立ち効果"]
+    cancelWindows:
+      - {type: "special", start: 10, end: 24, targetTags: ["special"]}
+  - id: ryu_5hk
+    name: "立ち強K（後ろ回し蹴り）"
+    notation: "5HK"
+    category: "通常技"
+    strength: "強"
+    input: "5HK"
+    tags: ["normal", "heavy"]
+    startup: 12
+    active: 4
+    recovery: 20
+    activeFrames: "12-15"
+    recoveryFrames: "20"
+    hitAdvantage: "9"
+    guardAdvantage: "1"
+    damage: "900"
+    driveGaugeGainHit: "3000"
+    driveGaugeLossGuard: "-6000"
+    driveGaugeLossPunishCounter: "-10000"
+    superArtGaugeGain: "1000"
+    attribute: "上"
+    notes: ["空中ヒット時吹き飛びダウン", "パニッシュカウンター時に膝崩れダウンに+36F", "空中パニッシュカウンター時吹き飛び時間延長"]
+  - id: ryu_2lp
+    name: "しゃがみ弱P（ジャブ）"
+    notation: "2LP"
+    category: "通常技"
+    strength: "弱"
+    input: "2LP"
+    tags: ["normal", "light"]
+    startup: 4
+    active: 2
+    recovery: 9
+    activeFrames: "4-5"
+    recoveryFrames: "9"
+    hitAdvantage: "4"
+    guardAdvantage: "-1"
+    cancel: "C"
+    damage: "300"
+    comboScaling: ["始動補正20%"]
+    driveGaugeGainHit: "250"
+    driveGaugeLossGuard: "-500"
+    driveGaugeLossPunishCounter: "-2000"
+    superArtGaugeGain: "300"
+    attribute: "上"
+    notes: ["連打キャンセル対応"]
+    cancelWindows:
+      - {type: "chain", start: 4, end: 16, targetTags: ["light"]}
+      - {type: "special", start: 4, end: 18, targetTags: ["special"]}
+  - id: ryu_2lk
+    name: "しゃがみ弱K（キック）"
+    notation: "2LK"
+    category: "通常技"
+    strength: "弱"
+    input: "2LK"
+    tags: ["normal", "light"]
+    startup: 5
+    active: 2
+    recovery: 10
+    activeFrames: "5-6"
+    recoveryFrames: "10"
+    hitAdvantage: "3"
+    guardAdvantage: "-1"
+    damage: "200"
+    comboScaling: ["始動補正20%"]
+    driveGaugeGainHit: "250"
+    driveGaugeLossGuard: "-500"
+    driveGaugeLossPunishCounter: "-2000"
+    superArtGaugeGain: "300"
+    attribute: "下"
+    notes: ["連打キャンセル対応"]
+    cancelWindows:
+      - {type: "chain", start: 5, end: 17, targetTags: ["light"]}
+  - id: ryu_2mp
+    name: "しゃがみ中P（ストレート）"
+    notation: "2MP"
+    category: "通常技"
+    strength: "中"
+    input: "2MP"
+    tags: ["normal", "medium"]
+    startup: 6
+    active: 4
+    recovery: 13
+    activeFrames: "6-9"
+    recoveryFrames: "13"
+    hitAdvantage: "5"
+    guardAdvantage: "0"
+    cancel: "C"
+    damage: "600"
+    driveGaugeGainHit: "1500"
+    driveGaugeLossGuard: "-3000"
+    driveGaugeLossPunishCounter: "-4000"
+    superArtGaugeGain: "500"
+    attribute: "上"
+    notes: ["空振り時硬直2F増加"]
+    cancelWindows:
+      - {type: "special", start: 6, end: 22, targetTags: ["special"]}
+  - id: ryu_2mk
+    name: "しゃがみ中K（くるぶしキック）"
+    notation: "2MK"
+    category: "通常技"
+    strength: "中"
+    input: "2MK"
+    tags: ["normal", "medium"]
+    startup: 8
+    active: 3
+    recovery: 19
+    activeFrames: "8-10"
+    recoveryFrames: "19"
+    hitAdvantage: "1"
+    guardAdvantage: "-6"
+    cancel: "C"
+    damage: "500"
+    comboScaling: ["始動補正20%"]
+    driveGaugeGainHit: "1000"
+    driveGaugeLossGuard: "-2000"
+    driveGaugeLossPunishCounter: "-4000"
+    superArtGaugeGain: "500"
+    attribute: "下"
+    cancelWindows:
+      - {type: "special", start: 8, end: 24, targetTags: ["special"]}
+  - id: ryu_2hp
+    name: "しゃがみ強P（突き上げアッパー）"
+    notation: "2HP"
+    category: "通常技"
+    strength: "強"
+    input: "2HP"
+    tags: ["normal", "heavy"]
+    startup: 9
+    active: 6
+    recovery: 22
+    activeFrames: "9-14"
+    recoveryFrames: "22"
+    hitAdvantage: "1"
+    guardAdvantage: "-7"
+    cancel: "C"
+    damage: "800"
+    driveGaugeGainHit: "3000"
+    driveGaugeLossGuard: "-7500"
+    driveGaugeLossPunishCounter: "-10000"
+    superArtGaugeGain: "1200"
+    attribute: "上"
+    notes: ["キャンセルは持続の1F目がヒットした時のみ", "強制立ち効果"]
+    cancelWindows:
+      - {type: "special", start: 9, end: 14, targetTags: ["special"]}
+  - id: ryu_2hk
+    name: "しゃがみ強K（回転足払い）"
+    notation: "2HK"
+    category: "通常技"
+    strength: "強"
+    input: "2HK"
+    tags: ["normal", "heavy"]
+    startup: 9
+    active: 3
+    recovery: 23
+    activeFrames: "9-11"
+    recoveryFrames: "23"
+    hitAdvantage: "D"
+    guardAdvantage: "-12"
+    damage: "900"
+    driveGaugeGainHit: "3000"
+    driveGaugeLossGuard: "-4000"
+    driveGaugeLossPunishCounter: "-10000"
+    superArtGaugeGain: "1000"
+    attribute: "下"
+    notes: ["パニッシュカウンター時ダウン時間増加、ハードノックダウン"]
+
+  - id: ryu_jlp
+    name: "ジャンプ弱P（肘落とし）"
+    notation: "j.LP"
+    category: "通常技"
+    strength: "弱"
+    input: "8LP"
+    tags: ["normal", "jump", "light"]
+    startup: 4
+    activeFrames: "4-13"
+    recoveryFrames: "着地後3"
+    damage: "300"
+    driveGaugeGainHit: "500"
+    driveGaugeLossGuard: "-1500"
+    driveGaugeLossPunishCounter: "-2000"
+    superArtGaugeGain: "300"
+    attribute: "中"
+  - id: ryu_jlk
+    name: "ジャンプ弱K（ひざ蹴り）"
+    notation: "j.LK"
+    category: "通常技"
+    strength: "弱"
+    input: "8LK"
+    tags: ["normal", "jump", "light"]
+    startup: 6
+    activeFrames: "6-15"
+    recoveryFrames: "着地後3"
+    damage: "300"
+    driveGaugeGainHit: "500"
+    driveGaugeLossGuard: "-1500"
+    driveGaugeLossPunishCounter: "-2000"
+    superArtGaugeGain: "300"
+    attribute: "中"
+    notes: ["めくり性能"]
+  - id: ryu_jmp
+    name: "ジャンプ中P（すくい突き）"
+    notation: "j.MP"
+    category: "通常技"
+    strength: "中"
+    input: "8MP"
+    tags: ["normal", "jump", "medium"]
+    startup: 8
+    activeFrames: "8-12"
+    recoveryFrames: "着地後3"
+    cancel: "C"
+    damage: "700"
+    driveGaugeGainHit: "1000"
+    driveGaugeLossGuard: "-3000"
+    driveGaugeLossPunishCounter: "-5000"
+    superArtGaugeGain: "500"
+    attribute: "中上"
+    notes: ["空中ヒット時吹き飛びダウン"]
+  - id: ryu_jmk
+    name: "ジャンプ中K（飛び蹴り）"
+    notation: "j.MK"
+    category: "通常技"
+    strength: "中"
+    input: "8MK"
+    tags: ["normal", "jump", "medium"]
+    startup: 7
+    activeFrames: "7-12"
+    recoveryFrames: "着地後3"
+    damage: "500"
+    driveGaugeGainHit: "1000"
+    driveGaugeLossGuard: "-2500"
+    driveGaugeLossPunishCounter: "-4000"
+    superArtGaugeGain: "500"
+    attribute: "中"
+    notes: ["めくり性能"]
+  - id: ryu_jhp
+    name: "ジャンプ強P（ストレート）"
+    notation: "j.HP"
+    category: "通常技"
+    strength: "強"
+    input: "8HP"
+    tags: ["normal", "jump", "heavy"]
+    startup: 9
+    activeFrames: "9-14"
+    recoveryFrames: "着地後3"
+    damage: "800"
+    driveGaugeGainHit: "2000"
+    driveGaugeLossGuard: "-4000"
+    driveGaugeLossPunishCounter: "-5000"
+    superArtGaugeGain: "1000"
+    attribute: "中"
+    notes: ["空中カウンター/パニッシュカウンター時叩きつけダウン"]
+  - id: ryu_jhk
+    name: "ジャンプ強K（跳び前蹴り）"
+    notation: "j.HK"
+    category: "通常技"
+    strength: "強"
+    input: "8HK"
+    tags: ["normal", "jump", "heavy"]
+    startup: 10
+    activeFrames: "10-17"
+    recoveryFrames: "着地後3"
+    damage: "800"
+    driveGaugeGainHit: "2000"
+    driveGaugeLossGuard: "-4000"
+    driveGaugeLossPunishCounter: "-5000"
+    superArtGaugeGain: "1000"
+    attribute: "中"
+
+  - id: ryu_sakotsu_wari
+    name: "鎖骨割り"
+    notation: "6MP"
+    category: "特殊技"
+    strength: "中"
+    input: "6MP"
+    tags: ["unique", "medium", "overhead"]
+    startup: 20
+    active: 4
+    recovery: 19
+    activeFrames: "20-23"
+    recoveryFrames: "19"
+    hitAdvantage: "3"
+    guardAdvantage: "-3"
+    damage: "600"
+    driveGaugeGainHit: "1500"
+    driveGaugeLossGuard: "-2500"
+    driveGaugeLossPunishCounter: "-5000"
+    superArtGaugeGain: "500"
+    attribute: "※中上"
+    notes: ["※初段が空振り時のみ2段目が中段判定"]
+  - id: ryu_mizoochi_kudaki
+    name: "鳩尾砕き"
+    notation: "6HP"
+    category: "特殊技"
+    strength: "強"
+    input: "6HP"
+    tags: ["unique", "heavy"]
+    startup: 20
+    active: 5
+    recovery: 16
+    activeFrames: "20-24"
+    recoveryFrames: "16"
+    hitAdvantage: "6"
+    guardAdvantage: "3"
+    damage: "800"
+    driveGaugeGainHit: "2500"
+    driveGaugeLossGuard: "-5000"
+    driveGaugeLossPunishCounter: "-8000"
+    superArtGaugeGain: "1000"
+    attribute: "上"
+  - id: ryu_age_tsuki
+    name: "上げ突き"
+    notation: "4HP"
+    category: "特殊技"
+    strength: "強"
+    input: "4HP"
+    tags: ["unique", "heavy"]
+    startup: 7
+    active: 4
+    recovery: 26
+    activeFrames: "7-10"
+    recoveryFrames: "26"
+    hitAdvantage: "1"
+    guardAdvantage: "-13"
+    cancel: "C"
+    damage: "800"
+    driveGaugeGainHit: "2000"
+    driveGaugeLossGuard: "-5000"
+    driveGaugeLossPunishCounter: "-8000"
+    superArtGaugeGain: "1000"
+    attribute: "上"
+    notes: ["キャンセルは持続の1F目がヒットした時のみ", "強制立ち効果"]
+  - id: ryu_kakato_otoshi
+    name: "かかと落とし"
+    notation: "4HK"
+    category: "特殊技"
+    strength: "強"
+    input: "4HK"
+    tags: ["unique", "heavy"]
+    startup: 10
+    activeFrames: "10-23"
+    recoveryFrames: "21"
+    hitAdvantage: "0"
+    guardAdvantage: "-4"
+    cancel: "C"
+    damage: "800"
+    driveGaugeGainHit: "3500"
+    driveGaugeLossGuard: "-3000"
+    driveGaugeLossPunishCounter: "-6000"
+    superArtGaugeGain: "1000"
+    attribute: "上"
+    notes: ["1段目強制立ち効果", "2段目空中ヒット時床バウンド"]
+  - id: ryu_senpukyaku
+    name: "旋風脚"
+    notation: "6HK"
+    category: "特殊技"
+    strength: "強"
+    input: "6HK"
+    tags: ["unique", "heavy"]
+    startup: 16
+    active: 4
+    recovery: 20
+    activeFrames: "16-19"
+    recoveryFrames: "20"
+    hitAdvantage: "2"
+    guardAdvantage: "-4"
+    cancel: "※"
+    damage: "800"
+    driveGaugeGainHit: "2500"
+    driveGaugeLossGuard: "-5000"
+    driveGaugeLossPunishCounter: "-8000"
+    superArtGaugeGain: "1000"
+    attribute: "上"
+    notes: ["※空中竜巻旋風脚(OD版を含む)でキャンセル可能"]
+  - id: ryu_jodan_nirengeki
+    name: "上段二連撃"
+    notation: "HP > HP"
+    category: "特殊技"
+    strength: "強強"
+    input: "HP+HP"
+    tags: ["target_combo", "heavy"]
+    startup: 9
+    active: 4
+    recovery: 20
+    activeFrames: "9-12"
+    recoveryFrames: "20"
+    hitAdvantage: "D"
+    guardAdvantage: "-8"
+    cancel: "※"
+    damage: "1000"
+    driveGaugeGainHit: "2500"
+    driveGaugeLossGuard: "-7000"
+    driveGaugeLossPunishCounter: "-10000"
+    superArtGaugeGain: "1000"
+    attribute: "上"
+    notes: ["※ヒット時、電刃錬気でのみキャンセル可能", "クラシック操作:↓+P、モダン操作:↓＋攻撃"]
+  - id: ryu_fuwa_2
+    name: "不破三連撃（2段目）"
+    notation: "MP > LK"
+    category: "特殊技"
+    strength: "中弱"
+    input: "MP+LK"
+    tags: ["target_combo", "medium", "light"]
+    startup: 5
+    active: 3
+    recovery: 16
+    activeFrames: "5-7"
+    recoveryFrames: "16"
+    hitAdvantage: "1"
+    guardAdvantage: "-4"
+    damage: "300"
+    driveGaugeGainHit: "1000"
+    driveGaugeLossGuard: "-1000"
+    driveGaugeLossPunishCounter: "-2000"
+    superArtGaugeGain: "500"
+    attribute: "上"
+  - id: ryu_fuwa_3
+    name: "不破三連撃（3段目）"
+    notation: "MP > LK > HP"
+    category: "特殊技"
+    strength: "中弱強"
+    input: "MP+LK+HP"
+    tags: ["target_combo", "heavy"]
+    startup: 17
+    active: 4
+    recovery: 20
+    activeFrames: "17-20"
+    recoveryFrames: "20"
+    hitAdvantage: "D"
+    guardAdvantage: "-8"
+    cancel: "※"
+    damage: "900"
+    driveGaugeGainHit: "2500"
+    driveGaugeLossGuard: "-3000"
+    driveGaugeLossPunishCounter: "-10000"
+    superArtGaugeGain: "1000"
+    attribute: "上"
+    notes: ["※ヒット時、電刃錬気でのみキャンセル可能", "クラシック操作:↓+P、モダン操作:↓＋攻撃"]
+
+  - id: ryu_lp_hadoken
+    name: "弱 波動拳"
+    notation: "236LP"
+    category: "必殺技"
+    strength: "弱"
+    command: "hadoken_lp"
+    tags: ["special", "projectile"]
+    startup: 16
+    totalFrames: "全体 47"
+    hitAdvantage: "2"
+    guardAdvantage: "-5"
+    cancel: "SA3"
+    damage: "700"
+    driveGaugeGainHit: "1000"
+    driveGaugeLossGuard: "-2500"
+    driveGaugeLossPunishCounter: "-3000"
+    superArtGaugeGain: "600"
+    attribute: "上・弾"
+  - id: ryu_mp_hadoken
+    name: "中 波動拳"
+    notation: "236MP"
+    category: "必殺技"
+    strength: "中"
+    input: "236MP"
+    tags: ["special", "projectile"]
+    startup: 14
+    totalFrames: "全体 47"
+    hitAdvantage: "0"
+    guardAdvantage: "-7"
+    cancel: "SA3"
+    damage: "700"
+    driveGaugeGainHit: "1000"
+    driveGaugeLossGuard: "-2500"
+    driveGaugeLossPunishCounter: "-3000"
+    superArtGaugeGain: "600"
+    attribute: "上・弾"
+  - id: ryu_hp_hadoken
+    name: "強 波動拳"
+    notation: "236HP"
+    category: "必殺技"
+    strength: "強"
+    input: "236HP"
+    tags: ["special", "projectile"]
+    startup: 12
+    totalFrames: "全体 47"
+    hitAdvantage: "-2"
+    guardAdvantage: "-9"
+    cancel: "SA3"
+    damage: "700"
+    driveGaugeGainHit: "1000"
+    driveGaugeLossGuard: "-2500"
+    driveGaugeLossPunishCounter: "-3000"
+    superArtGaugeGain: "600"
+    attribute: "上・弾"
+  - id: ryu_denjin_hadoken
+    name: "[電刃錬気]波動拳"
+    notation: "236P"
+    category: "必殺技"
+    input: "236P"
+    tags: ["special", "projectile", "denjin"]
+    startup: 12
+    totalFrames: "全体 40"
+    hitAdvantage: "D"
+    guardAdvantage: "-1"
+    cancel: "SA3"
+    damage: "1000"
+    comboScaling: ["始動補正20％", "コンボ補正20％"]
+    driveGaugeGainHit: "1000"
+    driveGaugeLossGuard: "-2500"
+    driveGaugeLossPunishCounter: "-3000"
+    superArtGaugeGain: "600"
+    attribute: "上・弾"
+  - id: ryu_od_hadoken
+    name: "OD 波動拳"
+    notation: "236PP"
+    category: "必殺技"
+    input: "236LP+MP"
+    tags: ["special", "projectile", "od"]
+    startup: 12
+    totalFrames: "全体 40"
+    hitAdvantage: "D"
+    guardAdvantage: "-1"
+    cancel: "SA2"
+    damage: "1000"
+    comboScaling: ["始動補正20％", "コンボ補正20％"]
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "-2500"
+    driveGaugeLossPunishCounter: "-5000"
+    superArtGaugeGain: "600"
+    attribute: "上・弾"
+  - id: ryu_denjin_od_hadoken
+    name: "[電刃錬気]OD 波動拳"
+    notation: "236PP"
+    category: "必殺技"
+    input: "236LP+MP"
+    tags: ["special", "projectile", "od", "denjin"]
+    startup: 12
+    totalFrames: "全体 38"
+    hitAdvantage: "D"
+    guardAdvantage: "2"
+    cancel: "SA2"
+    damage: "1200"
+    comboScaling: ["始動補正20％", "コンボ補正20％"]
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "-3750"
+    driveGaugeLossPunishCounter: "-7000"
+    superArtGaugeGain: "900"
+    attribute: "上・弾"
+
+  - id: ryu_lp_shoryuken
+    name: "弱 昇龍拳"
+    notation: "623LP"
+    category: "必殺技"
+    strength: "弱"
+    input: "623LP"
+    tags: ["special"]
+    startup: 5
+    activeFrames: "5-14"
+    recoveryFrames: "21+着地後12"
+    hitAdvantage: "D"
+    guardAdvantage: "-23"
+    cancel: "SA3"
+    damage: "※1100"
+    comboScaling: ["始動補正30%"]
+    driveGaugeGainHit: "2000"
+    driveGaugeLossGuard: "-4000"
+    driveGaugeLossPunishCounter: "-5000"
+    superArtGaugeGain: "1000"
+    attribute: "上"
+    notes: ["1-14F 空中判定の打撃・空弾属性に対して無敵", "7-34F 空中判定", "※持続の3F目以降は個別ダメージ（800）"]
+  - id: ryu_mp_shoryuken
+    name: "中 昇龍拳"
+    notation: "623MP"
+    category: "必殺技"
+    strength: "中"
+    input: "623MP"
+    tags: ["special"]
+    startup: 6
+    activeFrames: "6-15"
+    recoveryFrames: "30+着地後12"
+    hitAdvantage: "D"
+    guardAdvantage: "-32"
+    cancel: "SA3"
+    damage: "※1200"
+    comboScaling: ["始動補正30%"]
+    driveGaugeGainHit: "2000"
+    driveGaugeLossGuard: "-4000"
+    driveGaugeLossPunishCounter: "-5000"
+    superArtGaugeGain: "1000"
+    attribute: "上"
+    notes: ["1-9F 空中判定の打撃・空弾属性に対して無敵", "8-44F 空中判定", "※持続の3F目以降は個別ダメージ（800）"]
+  - id: ryu_hp_shoryuken
+    name: "強 昇龍拳"
+    notation: "623HP"
+    category: "必殺技"
+    strength: "強"
+    command: "shoryuken_hp"
+    tags: ["special"]
+    startup: 7
+    activeFrames: "7-16"
+    recoveryFrames: "34+着地後12"
+    hitAdvantage: "D"
+    guardAdvantage: "-36"
+    cancel: "SA3"
+    damage: "※1400"
+    comboScaling: ["始動補正30%"]
+    driveGaugeGainHit: "2000"
+    driveGaugeLossGuard: "-4000"
+    driveGaugeLossPunishCounter: "-5000"
+    superArtGaugeGain: "1000"
+    attribute: "上"
+    notes: ["1-8F 空中判定の打撃・空弾属性に対して無敵", "9-49F 空中判定", "※持続の2F目以降は個別ダメージ（800）"]
+  - id: ryu_od_shoryuken
+    name: "OD 昇龍拳"
+    notation: "623PP"
+    category: "必殺技"
+    input: "623LP+MP"
+    tags: ["special", "od"]
+    startup: 6
+    activeFrames: "6-15"
+    recoveryFrames: "37+着地後15"
+    hitAdvantage: "D"
+    guardAdvantage: "-40"
+    damage: "1600"
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "-2000"
+    driveGaugeLossPunishCounter: "0"
+    superArtGaugeGain: "1000"
+    attribute: "上"
+    notes: ["1-8F 完全無敵", "8-51F 空中判定"]
+
+  - id: ryu_lp_tatsumaki
+    name: "弱 竜巻旋風脚"
+    notation: "214LK"
+    category: "必殺技"
+    strength: "弱"
+    input: "214LK"
+    tags: ["special"]
+    startup: 12
+    activeFrames: "12-14"
+    recoveryFrames: "14+着地後18"
+    hitAdvantage: "D"
+    guardAdvantage: "-15"
+    damage: "900"
+    driveGaugeGainHit: "3000"
+    driveGaugeLossGuard: "-4000"
+    driveGaugeLossPunishCounter: "-5000"
+    superArtGaugeGain: "1200"
+    attribute: "上"
+    notes: ["5-28F 空中判定"]
+  - id: ryu_mp_tatsumaki
+    name: "中 竜巻旋風脚"
+    notation: "214MK"
+    category: "必殺技"
+    strength: "中"
+    input: "214MK"
+    tags: ["special"]
+    startup: 14
+    activeFrames: "14-30"
+    recoveryFrames: "11+着地後20"
+    hitAdvantage: "D"
+    guardAdvantage: "-13"
+    damage: "1000"
+    driveGaugeGainHit: "3500"
+    driveGaugeLossGuard: "-2500"
+    driveGaugeLossPunishCounter: "-5000"
+    superArtGaugeGain: "1300"
+    attribute: "上"
+    notes: ["8-41F 空中判定"]
+  - id: ryu_hp_tatsumaki
+    name: "強 竜巻旋風脚"
+    notation: "214HK"
+    category: "必殺技"
+    strength: "強"
+    input: "214HK"
+    tags: ["special"]
+    startup: 16
+    activeFrames: "16-47"
+    recoveryFrames: "14+着地後17"
+    hitAdvantage: "D"
+    guardAdvantage: "-13"
+    damage: "1200"
+    driveGaugeGainHit: "4000"
+    driveGaugeLossGuard: "-2000"
+    driveGaugeLossPunishCounter: "-5000"
+    superArtGaugeGain: "1400"
+    attribute: "上"
+    notes: ["10-61F 空中判定"]
+  - id: ryu_od_tatsumaki
+    name: "OD 竜巻旋風脚"
+    notation: "214KK"
+    category: "必殺技"
+    input: "214LK+MK"
+    tags: ["special", "od"]
+    startup: 13
+    activeFrames: "13-37"
+    recoveryFrames: "10+着地後13"
+    hitAdvantage: "D"
+    guardAdvantage: "-14"
+    damage: "1000"
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "-4000"
+    driveGaugeLossPunishCounter: "-5000"
+    superArtGaugeGain: "1000"
+    attribute: "上"
+    notes: ["5-47F 空中判定"]
+  - id: ryu_air_tatsumaki
+    name: "空中竜巻旋風脚"
+    notation: "j.214K"
+    category: "必殺技"
+    input: "8214LK"
+    tags: ["special", "air"]
+    startup: 11
+    activeFrames: "11-27"
+    recoveryFrames: "着地後16"
+    hitAdvantage: "D"
+    damage: "900"
+    comboScaling: ["始動補正30%"]
+    driveGaugeGainHit: "2000"
+    driveGaugeLossGuard: "-4000"
+    driveGaugeLossPunishCounter: "-5000"
+    superArtGaugeGain: "600"
+    attribute: "上"
+  - id: ryu_od_air_tatsumaki
+    name: "OD 空中竜巻旋風脚"
+    notation: "j.214KK"
+    category: "必殺技"
+    input: "8214LK+MK"
+    tags: ["special", "air", "od"]
+    startup: 11
+    activeFrames: "11-28"
+    recoveryFrames: "着地後16"
+    hitAdvantage: "D"
+    damage: "1500"
+    comboScaling: ["コンボ補正25%"]
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "-4000"
+    driveGaugeLossPunishCounter: "-5000"
+    superArtGaugeGain: "600"
+    attribute: "上"
+
+  - id: ryu_lp_jodan_sokutogeri
+    name: "弱 上段足刀蹴り"
+    notation: "214LP"
+    category: "必殺技"
+    strength: "弱"
+    input: "214LP"
+    tags: ["special"]
+    startup: 14
+    activeFrames: "14-19"
+    recoveryFrames: "22"
+    hitAdvantage: "D"
+    guardAdvantage: "-11"
+    cancel: "SA3"
+    damage: "1100"
+    driveGaugeGainHit: "3000"
+    driveGaugeLossGuard: "-6000"
+    driveGaugeLossPunishCounter: "-5000"
+    superArtGaugeGain: "1400"
+    attribute: "上"
+  - id: ryu_mp_jodan_sokutogeri
+    name: "中 上段足刀蹴り"
+    notation: "214MP"
+    category: "必殺技"
+    strength: "中"
+    input: "214MP"
+    tags: ["special"]
+    startup: 18
+    activeFrames: "18-26"
+    recoveryFrames: "19"
+    hitAdvantage: "D"
+    guardAdvantage: "-8"
+    cancel: "SA3"
+    damage: "1200"
+    driveGaugeGainHit: "3500"
+    driveGaugeLossGuard: "-6000"
+    driveGaugeLossPunishCounter: "-7000"
+    superArtGaugeGain: "1400"
+    attribute: "上"
+  - id: ryu_hp_jodan_sokutogeri
+    name: "強 上段足刀蹴り"
+    notation: "214HP"
+    category: "必殺技"
+    strength: "強"
+    input: "214HP"
+    tags: ["special"]
+    startup: 27
+    activeFrames: "27-35"
+    recoveryFrames: "15"
+    hitAdvantage: "D"
+    guardAdvantage: "-3"
+    cancel: "SA3"
+    damage: "1300"
+    driveGaugeGainHit: "5000"
+    driveGaugeLossGuard: "-10000"
+    driveGaugeLossPunishCounter: "-10000"
+    superArtGaugeGain: "1400"
+    attribute: "上"
+    notes: ["パニッシュカウンター時吹き飛び時間延長"]
+  - id: ryu_od_jodan_sokutogeri
+    name: "OD 上段足刀蹴り"
+    notation: "214PP"
+    category: "必殺技"
+    input: "214LP+MP"
+    tags: ["special", "od"]
+    startup: 17
+    activeFrames: "17-21"
+    recoveryFrames: "33"
+    hitAdvantage: "D"
+    guardAdvantage: "-18"
+    cancel: "SA2"
+    damage: "800"
+    comboScaling: ["コンボ補正15%"]
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "-4000"
+    driveGaugeLossPunishCounter: "-5000"
+    superArtGaugeGain: "1200"
+    attribute: "上"
+
+  - id: ryu_lp_hashogeki
+    name: "弱 波掌撃"
+    notation: "236LK"
+    category: "必殺技"
+    strength: "弱"
+    input: "236LK"
+    tags: ["special"]
+    startup: 12
+    activeFrames: "12-17"
+    recoveryFrames: "18"
+    hitAdvantage: "2"
+    guardAdvantage: "-3"
+    cancel: "SA3"
+    damage: "700"
+    driveGaugeGainHit: "2000"
+    driveGaugeLossGuard: "-2000"
+    driveGaugeLossPunishCounter: "-5000"
+    superArtGaugeGain: "800"
+    attribute: "上"
+    notes: ["カウンター/パニッシュカウンター時吹き飛びダウン", "飛び道具相殺判定あり（1回）"]
+  - id: ryu_mp_hashogeki
+    name: "中 波掌撃"
+    notation: "236MK"
+    category: "必殺技"
+    strength: "中"
+    input: "236MK"
+    tags: ["special"]
+    startup: 19
+    activeFrames: "19-24"
+    recoveryFrames: "17"
+    hitAdvantage: "2"
+    guardAdvantage: "-6"
+    cancel: "SA3"
+    damage: "800"
+    driveGaugeGainHit: "2000"
+    driveGaugeLossGuard: "-6000"
+    driveGaugeLossPunishCounter: "-5000"
+    superArtGaugeGain: "800"
+    attribute: "上"
+    notes: ["カウンター/パニッシュカウンター時吹き飛びダウン", "飛び道具相殺判定あり（1回）"]
+  - id: ryu_hp_hashogeki
+    name: "強 波掌撃"
+    notation: "236HK"
+    category: "必殺技"
+    strength: "強"
+    input: "236HK"
+    tags: ["special"]
+    startup: 30
+    activeFrames: "30-34.35"
+    recoveryFrames: "19"
+    hitAdvantage: "D"
+    guardAdvantage: "2"
+    cancel: "SA3"
+    damage: "800"
+    driveGaugeGainHit: "2000"
+    driveGaugeLossGuard: "-6000"
+    driveGaugeLossPunishCounter: "-5000"
+    superArtGaugeGain: "1100"
+    attribute: "上"
+    notes: ["飛び道具相殺判定あり（2回）"]
+  - id: ryu_denjin_hashogeki
+    name: "[電刃錬気]波掌撃"
+    notation: "236K"
+    category: "必殺技"
+    input: "236LK"
+    tags: ["special", "denjin"]
+    startup: 20
+    activeFrames: "20-24.25"
+    recoveryFrames: "19"
+    hitAdvantage: "D"
+    guardAdvantage: "3"
+    cancel: "SA3"
+    damage: "800"
+    driveGaugeGainHit: "2000"
+    driveGaugeLossGuard: "-6000"
+    driveGaugeLossPunishCounter: "-5000"
+    superArtGaugeGain: "1100"
+    attribute: "上"
+    notes: ["飛び道具相殺判定あり（2回）"]
+  - id: ryu_od_hashogeki
+    name: "OD 波掌撃"
+    notation: "236KK"
+    category: "必殺技"
+    input: "236LK+MK"
+    tags: ["special", "od"]
+    startup: 18
+    activeFrames: "18-22"
+    recoveryFrames: "20"
+    hitAdvantage: "3"
+    guardAdvantage: "3"
+    cancel: "SA2"
+    damage: "1100"
+    comboScaling: ["コンボ補正20％"]
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "-6000"
+    driveGaugeLossPunishCounter: "-5000"
+    superArtGaugeGain: "900"
+    attribute: "上"
+    notes: ["飛び道具相殺判定あり（1回）"]
+  - id: ryu_denjin_od_hashogeki
+    name: "[電刃錬気]OD 波掌撃"
+    notation: "236KK"
+    category: "必殺技"
+    input: "236LK+MK"
+    tags: ["special", "od", "denjin"]
+    startup: 18
+    activeFrames: "18-23"
+    recoveryFrames: "19"
+    hitAdvantage: "D"
+    guardAdvantage: "4"
+    cancel: "SA2"
+    damage: "800"
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "-6000"
+    driveGaugeLossPunishCounter: "-5000"
+    superArtGaugeGain: "1100"
+    attribute: "上"
+    notes: ["ヒット時に膝崩れダウンに＋39", "飛び道具相殺判定あり（1回）"]
+  - id: ryu_denjin_charge
+    name: "電刃錬気"
+    notation: "22P"
+    category: "必殺技"
+    input: "22P"
+    tags: ["special", "install"]
+    totalFrames: "全体 52"
+    hitAdvantage: "0"
+    guardAdvantage: "0"
+    damage: "0"
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "0"
+    driveGaugeLossPunishCounter: "0"
+    superArtGaugeGain: "0"
+    notes: ["51F目で電刃錬気を1つストック（1つまでストック可能）", "波動拳、波掌撃、真空波動拳、真波掌撃の性能が強化される"]
+
+  - id: ryu_sa1_shinku_hadoken
+    name: "SA1 真空波動拳"
+    notation: "236236P"
+    category: "スーパーアーツ"
+    input: "236236P"
+    tags: ["super", "sa1", "projectile"]
+    startup: 7
+    totalFrames: "全体 86"
+    hitAdvantage: "D"
+    guardAdvantage: "-24"
+    damage: "2000"
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "-2500"
+    driveGaugeLossPunishCounter: "-5000"
+    superArtGaugeGain: "0"
+    attribute: "上・弾"
+    notes: ["1-8F 打撃・投げに対して無敵", "カウンター/パニッシュカウンターで数値が変動しない", "最低保障ダメージ30％"]
+  - id: ryu_denjin_sa1_shinku_hadoken
+    name: "[電刃錬気]SA1 真空波動拳"
+    notation: "236236P"
+    category: "スーパーアーツ"
+    input: "236236P"
+    tags: ["super", "sa1", "projectile", "denjin"]
+    startup: 7
+    totalFrames: "全体 89"
+    hitAdvantage: "D"
+    guardAdvantage: "-24"
+    damage: "2400"
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "-2500"
+    driveGaugeLossPunishCounter: "-5000"
+    superArtGaugeGain: "0"
+    attribute: "上・弾"
+    notes: ["1-8F 打撃・投げに対して無敵", "カウンター/パニッシュカウンターで数値が変動しない", "最低保障ダメージ30％"]
+  - id: ryu_sa2_shin_hashogeki_lv1
+    name: "SA2 真波掌撃（Lv1）"
+    notation: "214214P"
+    category: "スーパーアーツ"
+    input: "214214P"
+    tags: ["super", "sa2"]
+    startup: 12
+    activeFrames: "12-17"
+    recoveryFrames: "39"
+    hitAdvantage: "D"
+    guardAdvantage: "-20"
+    damage: "2800"
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "-4000"
+    driveGaugeLossPunishCounter: "-10000"
+    superArtGaugeGain: "0"
+    attribute: "上"
+    notes: ["1-13F 完全無敵", "ボタンをホールドする事で性能変化", "7F以上ボタンを押して離すとLv2が発動", "39F以上ボタンを押して離すとLv3が発動", "カウンター/パニッシュカウンターで数値が変動しない", "最低保障ダメージ40％"]
+  - id: ryu_sa2_shin_hashogeki_lv2
+    name: "SA2 真波掌撃（Lv2）"
+    notation: "214214P"
+    category: "スーパーアーツ"
+    input: "214214P"
+    tags: ["super", "sa2"]
+    startup: 20
+    activeFrames: "20-25"
+    recoveryFrames: "39"
+    hitAdvantage: "D"
+    guardAdvantage: "-20"
+    damage: "2900"
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "-6000"
+    driveGaugeLossPunishCounter: "-10000"
+    superArtGaugeGain: "0"
+    attribute: "上"
+    notes: ["1-9F 完全無敵", "ボタンをホールドする事で性能変化", "7F以上ボタンを押して離すとLv2が発動", "39F以上ボタンを押して離すとLv3が発動", "カウンター/パニッシュカウンターで数値が変動しない", "最低保障ダメージ40％"]
+  - id: ryu_sa2_shin_hashogeki_lv3
+    name: "SA2 真波掌撃（Lv3）"
+    notation: "214214P"
+    category: "スーパーアーツ"
+    input: "214214P"
+    tags: ["super", "sa2"]
+    startup: 70
+    activeFrames: "70-75"
+    recoveryFrames: "39"
+    hitAdvantage: "D"
+    guardAdvantage: "-20"
+    damage: "3000"
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "-10000"
+    driveGaugeLossPunishCounter: "-10000"
+    superArtGaugeGain: "0"
+    attribute: "上"
+    notes: ["1-9F 完全無敵", "ボタンをホールドする事で性能変化", "7F以上ボタンを押して離すとLv2が発動", "39F以上ボタンを押して離すとLv3が発動", "カウンター/パニッシュカウンターで数値が変動しない", "最低保障ダメージ40％"]
+  - id: ryu_denjin_sa2_shin_hashogeki_lv1
+    name: "[電刃錬気]SA2 真波掌撃（Lv1）"
+    notation: "214214P"
+    category: "スーパーアーツ"
+    input: "214214P"
+    tags: ["super", "sa2", "denjin"]
+    startup: 12
+    activeFrames: "12-17"
+    recoveryFrames: "39"
+    hitAdvantage: "D"
+    guardAdvantage: "-20"
+    damage: "3200"
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "-4000"
+    driveGaugeLossPunishCounter: "-10000"
+    superArtGaugeGain: "0"
+    attribute: "上"
+    notes: ["1-13F 完全無敵", "ボタンをホールドする事で性能変化", "最低保障ダメージ40％"]
+  - id: ryu_denjin_sa2_shin_hashogeki_lv2
+    name: "[電刃錬気]SA2 真波掌撃（Lv2）"
+    notation: "214214P"
+    category: "スーパーアーツ"
+    input: "214214P"
+    tags: ["super", "sa2", "denjin"]
+    startup: 20
+    activeFrames: "20-25"
+    recoveryFrames: "39"
+    hitAdvantage: "D"
+    guardAdvantage: "-20"
+    damage: "3300"
+    comboScaling: ["コンボ補正20％"]
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "-6000"
+    driveGaugeLossPunishCounter: "-10000"
+    superArtGaugeGain: "0"
+    attribute: "上"
+    notes: ["1-9F 完全無敵", "ボタンをホールドする事で性能変化", "最低保障ダメージ40％"]
+  - id: ryu_denjin_sa2_shin_hashogeki_lv3
+    name: "[電刃錬気]SA2 真波掌撃（Lv3）"
+    notation: "214214P"
+    category: "スーパーアーツ"
+    input: "214214P"
+    tags: ["super", "sa2", "denjin"]
+    startup: 70
+    activeFrames: "70-75"
+    recoveryFrames: "39"
+    hitAdvantage: "D"
+    guardAdvantage: "-20"
+    damage: "3400"
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "-10000"
+    driveGaugeLossPunishCounter: "-10000"
+    superArtGaugeGain: "0"
+    attribute: "上"
+    notes: ["1-9F 完全無敵", "ボタンをホールドする事で性能変化", "最低保障ダメージ40％"]
+  - id: ryu_sa3_shin_shoryuken
+    name: "SA3 真・昇龍拳"
+    notation: "236236K"
+    category: "スーパーアーツ"
+    input: "236236K"
+    tags: ["super", "sa3"]
+    startup: 5
+    activeFrames: "5-16"
+    recoveryFrames: "71"
+    hitAdvantage: "D"
+    guardAdvantage: "-52"
+    damage: "4000"
+    comboScaling: ["※即時補正10%"]
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "-7500"
+    driveGaugeLossPunishCounter: "-15000"
+    superArtGaugeGain: "0"
+    attribute: "上"
+    notes: ["1-16F 完全無敵", "最低保障ダメージ50％", "カウンター/パニッシュカウンターで数値が変動しない", "※必殺技キャンセル時のみ適用"]
+  - id: ryu_ca_shin_shoryuken
+    name: "CA 真・昇龍拳"
+    notation: "236236K"
+    category: "スーパーアーツ"
+    input: "236236K"
+    tags: ["super", "ca"]
+    startup: 5
+    activeFrames: "5-16"
+    recoveryFrames: "71"
+    hitAdvantage: "D"
+    guardAdvantage: "-52"
+    damage: "4500"
+    comboScaling: ["※即時補正10%"]
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "-10000"
+    driveGaugeLossPunishCounter: "-20000"
+    superArtGaugeGain: "0"
+    attribute: "上"
+    notes: ["体力25%以下で使用可能", "1-16F 完全無敵", "最低保障ダメージ50％", "カウンター/パニッシュカウンターで数値が変動しない", "※必殺技キャンセル時のみ適用"]
+
+  - id: ryu_seoi_nage
+    name: "背負い投げ"
+    notation: "LP+LK"
+    category: "通常投げ"
+    input: "LP+LK"
+    tags: ["throw"]
+    startup: 5
+    activeFrames: "5-7"
+    recoveryFrames: "23"
+    hitAdvantage: "D"
+    damage: "1200"
+    comboScaling: ["即時補正20%"]
+    driveGaugeGainHit: "2000"
+    driveGaugeLossGuard: "0"
+    driveGaugeLossPunishCounter: "-10000"
+    superArtGaugeGain: "2000"
+    attribute: "投"
+    notes: ["パニッシュカウンター時: ダメージ2040", "パニッシュカウンター時: SAゲージ4000増加", "パニッシュカウンター時: ハードノックダウン"]
+  - id: ryu_tomoe_nage
+    name: "巴投げ"
+    notation: "4LP+LK"
+    category: "通常投げ"
+    input: "4LP+LK"
+    tags: ["throw"]
+    startup: 5
+    activeFrames: "5-7"
+    recoveryFrames: "23"
+    hitAdvantage: "D"
+    damage: "1200"
+    comboScaling: ["即時補正20%"]
+    driveGaugeGainHit: "2000"
+    driveGaugeLossGuard: "0"
+    driveGaugeLossPunishCounter: "-10000"
+    superArtGaugeGain: "2000"
+    attribute: "投"
+    notes: ["パニッシュカウンター時: ダメージ2040", "パニッシュカウンター時: SAゲージ4000増加", "パニッシュカウンター時: ハードノックダウン"]
+
+  - id: ryu_forward_dash
+    name: "前方ステップ"
+    notation: "66"
+    category: "共通システム"
+    input: "66"
+    tags: ["movement"]
+    totalFrames: "全体 19"
+    hitAdvantage: "0"
+    guardAdvantage: "0"
+    damage: "0"
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "0"
+    driveGaugeLossPunishCounter: "0"
+    superArtGaugeGain: "0"
+  - id: ryu_back_dash
+    name: "後方ステップ"
+    notation: "44"
+    category: "共通システム"
+    input: "44"
+    tags: ["movement"]
+    totalFrames: "全体 23"
+    hitAdvantage: "0"
+    guardAdvantage: "0"
+    damage: "0"
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "0"
+    driveGaugeLossPunishCounter: "0"
+    superArtGaugeGain: "0"
+    notes: ["1-15F 投げ無敵"]
+  - id: ryu_drive_impact
+    name: "ドライブインパクト（震撃）"
+    notation: "HP+HK"
+    category: "共通システム"
+    input: "HP+HK"
+    tags: ["system", "drive"]
+    startup: 26
+    activeFrames: "26-27"
+    recoveryFrames: "35"
+    hitAdvantage: "-3"
+    damage: "800"
+    comboScaling: ["始動補正20%"]
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "-5000"
+    driveGaugeLossPunishCounter: "-15000"
+    superArtGaugeGain: "0"
+    attribute: "上"
+    notes: ["1-27F アーマー判定（2回）", "ヒットバックでステージ端に到達すると壁やられが発生", "パニッシュカウンター、もしくはアーマー成立後にヒットで地上ヒット膝崩れ", "空中ヒット吹き飛び時間増加", "SAゲージ3000増加"]
+  - id: ryu_drive_reversal_guard
+    name: "[ガード時]ドライブリバーサル（胸尖打ち）"
+    notation: "6HP+HK"
+    category: "共通システム"
+    input: "6HP+HK"
+    tags: ["system", "drive"]
+    startup: 20
+    activeFrames: "20-22"
+    recoveryFrames: "26"
+    hitAdvantage: "D"
+    guardAdvantage: "-6"
+    damage: "500"
+    comboScaling: ["リカバリアブルダメージ"]
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "0"
+    driveGaugeLossPunishCounter: "0"
+    superArtGaugeGain: "0"
+    attribute: "上"
+    notes: ["ガード中 or ドライブパリィ成立中に使用", "1-22F 完全無敵", "ヒット時硬直5F増加"]
+  - id: ryu_drive_reversal_wakeup
+    name: "[起き上がり時]ドライブリバーサル（胸尖打ち）"
+    notation: "6HP+HK"
+    category: "共通システム"
+    input: "6HP+HK"
+    tags: ["system", "drive"]
+    startup: 18
+    activeFrames: "18-20"
+    recoveryFrames: "26"
+    hitAdvantage: "D"
+    guardAdvantage: "-6"
+    damage: "500"
+    comboScaling: ["リカバリアブルダメージ"]
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "0"
+    driveGaugeLossPunishCounter: "0"
+    superArtGaugeGain: "0"
+    attribute: "上"
+    notes: ["起き上がり時に使用", "1-20F 完全無敵", "ヒット時硬直5F増加"]
+  - id: ryu_drive_parry
+    name: "ドライブパリィ"
+    notation: "MP+MK"
+    category: "共通システム"
+    input: "MP+MK"
+    tags: ["system", "drive", "parry"]
+    startup: 1
+    activeFrames: "[※2] 1-12"
+    recoveryFrames: "33"
+    hitAdvantage: "※1"
+    guardAdvantage: "0"
+    damage: "0"
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "0"
+    driveGaugeLossPunishCounter: "0"
+    superArtGaugeGain: "0"
+    notes: ["※1 動作の4F目からドライブラッシュでキャンセル可", "※2 ボタンホールドでパリィの持続を延長可", "硬直部分はガードのみ可", "動作中常に被パニッシュカウンター判定"]
+  - id: ryu_just_parry_strike
+    name: "ジャストパリィ（打撃）"
+    notation: "guard+MP+MK"
+    category: "共通システム"
+    input: "4MP+MK"
+    tags: ["system", "drive", "parry"]
+    startup: 1
+    activeFrames: "1"
+    recoveryFrames: "0"
+    comboScaling: ["始動補正50％"]
+    notes: ["相手の攻撃に対応した方向入力を行った状態でパリィを入力し、入力したフレーム、もしくはその次のフレームで攻撃を受けると成立する", "方向が正しくなかった場合は通常のドライブパリィとなり、追加でDゲージが3000増加する", "硬直終了から5Fの間完全無敵", "ジャストパリィを取られた側はキャンセルが出来なくなり、動作終了まで強制パニッシュカウンター"]
+  - id: ryu_just_parry_projectile
+    name: "ジャストパリィ（飛び道具）"
+    notation: "MP+MK"
+    category: "共通システム"
+    input: "MP+MK"
+    tags: ["system", "drive", "parry"]
+    startup: 1
+    activeFrames: "1"
+    recoveryFrames: "10"
+    comboScaling: ["始動補正50％"]
+    notes: ["パリィを入力したフレーム、もしくはその次のフレームで攻撃を受けると成立する", "暗転演出が入らない", "ジャストパリィを取られた側はキャンセルが出来なくなり、動作終了まで強制パニッシュカウンター"]
+  - id: ryu_parry_drive_rush
+    name: "パリィドライブラッシュ"
+    notation: "MP+MK > 66"
+    category: "共通システム"
+    input: "MP+MK"
+    tags: ["system", "drive", "rush"]
+    totalFrames: "全体 45"
+    hitAdvantage: "※"
+    guardAdvantage: "0"
+    comboScaling: ["乗算補正15％"]
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "0"
+    driveGaugeLossPunishCounter: "0"
+    superArtGaugeGain: "0"
+    notes: ["暗転10F", "※動作9F目から攻撃行動にキャンセル可", "24F目からパリィ以外の行動でキャンセル可"]
+  - id: ryu_cancel_drive_rush
+    name: "キャンセルドライブラッシュ"
+    notation: "cancel > MP+MK"
+    category: "共通システム"
+    input: "MP+MK"
+    tags: ["system", "drive", "rush"]
+    totalFrames: "全体 46"
+    hitAdvantage: "※"
+    guardAdvantage: "0"
+    comboScaling: ["乗算補正15％"]
+    driveGaugeGainHit: "0"
+    driveGaugeLossGuard: "0"
+    driveGaugeLossPunishCounter: "0"
+    superArtGaugeGain: "0"
+    notes: ["暗転9F", "※動作10F目から攻撃行動にキャンセル可", "25F目からパリィ以外の行動でキャンセル可"]
+
+recipes:
+  - id: ryu_basic_light_001
+    name: "基本: 立ち弱P > しゃがみ弱K > 立ち弱P > 弱波動拳"
+    notation: "5LP > 2LK > 5LP > 236LP"
+    steps:
+      - move: "ryu_5lp"
+      - move: "ryu_2lk"
+      - move: "ryu_5lp"
+      - move: "ryu_lp_hadoken"
+    priority: 30
+  - id: ryu_basic_cancel_001
+    name: "基本: しゃがみ中K > 弱波動拳"
+    notation: "2MK > 236LP"
+    steps:
+      - move: "ryu_2mk"
+      - move: "ryu_lp_hadoken"
+    priority: 20
+  - id: ryu_basic_cancel_002
+    name: "基本: しゃがみ中P > 弱波動拳"
+    notation: "2MP > 236LP"
+    steps:
+      - move: "ryu_2mp"
+      - move: "ryu_lp_hadoken"
+    priority: 10
+
+practice:
+  mode: "focus"
+  activeRecipe: "ryu_basic_light_001"
+
+practiceSets:
+  - id: ryu_beginner
+    name: "リュウ基本練習"
+    mode: "playlist"
+    recipes:
+      - ryu_basic_light_001
+      - ryu_basic_cancel_001
+      - ryu_basic_cancel_002
+    loop: true
+    advanceOnComplete: true

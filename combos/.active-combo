@@ -1,0 +1,9 @@
+{
+  "file": "basic.yaml",
+  "set_id": "recipes",
+  "mode": "focus",
+  "activeRecipe": "ryu_basic_light_001",
+  "activeSet": "ryu_beginner",
+  "loop": true,
+  "advanceOnComplete": true
+}

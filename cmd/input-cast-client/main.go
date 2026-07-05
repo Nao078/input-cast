@@ -6,9 +6,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"image/color"
+	"io"
 	"math"
 	"net/url"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -25,6 +27,7 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -59,10 +62,25 @@ type bridgeUI struct {
 
 	connectionIcon   *widget.Icon
 	connectionStatus *widget.Label
+	facingStatus     *widget.Label
+	facingRight      bool
+	facingToggleDown bool
 	customServer     *widget.Check
 	serverHost       *widget.Entry
 	configProfile    *widget.Select
 	currentProfile   string
+	comboFile        *widget.Select
+	comboSet         *widget.Select
+	comboMode        *widget.Select
+	comboRecipe      *widget.Select
+	comboPracticeSet *widget.Select
+	comboLoop        *widget.Check
+	comboAdvance     *widget.Check
+	comboVolume      *widget.Slider
+	comboVolumeLabel *widget.Label
+	comboStatus      *widget.Label
+	comboState       *bridge.ComboResponse
+	comboLoading     bool
 	scanInterval     *widget.Entry
 	autoStart        *widget.Check
 	startMinimized   *widget.Check
@@ -191,6 +209,7 @@ func newBridgeUI(a fyne.App, w fyne.Window) *bridgeUI {
 		matrixInactive: make(map[string]color.NRGBA),
 		matrixActive:   make(map[string]color.NRGBA),
 		matrixLabels:   make(map[string]*canvas.Text),
+		facingRight:    true,
 	}
 
 	ui.customServer = widget.NewCheck("Use another server", func(value bool) {
@@ -218,6 +237,40 @@ func newBridgeUI(a fyne.App, w fyne.Window) *bridgeUI {
 			ui.promptNewProfile()
 		}
 	})
+	ui.comboFile = widget.NewSelect(nil, func(value string) {
+		ui.applyComboFileSelection(value)
+	})
+	ui.comboSet = widget.NewSelect(nil, func(value string) {
+		ui.activateSelectedCombo()
+	})
+	ui.comboMode = widget.NewSelect([]string{
+		string(bridge.PracticeModeFocus),
+		string(bridge.PracticeModePlaylist),
+		string(bridge.PracticeModeAutoDetect),
+	}, func(value string) {
+		ui.applyPracticeModeSelection(value)
+	})
+	ui.comboRecipe = widget.NewSelect(nil, func(value string) {
+		ui.activateSelectedCombo()
+	})
+	ui.comboPracticeSet = widget.NewSelect(nil, func(value string) {
+		ui.applyPracticeSetSelection(value)
+		ui.activateSelectedCombo()
+	})
+	ui.comboLoop = widget.NewCheck("Loop", func(value bool) {
+		ui.activateSelectedCombo()
+	})
+	ui.comboAdvance = widget.NewCheck("Advance on complete", func(value bool) {
+		ui.activateSelectedCombo()
+	})
+	ui.comboVolumeLabel = widget.NewLabel("Volume: 70%")
+	ui.comboVolume = widget.NewSlider(0, 100)
+	ui.comboVolume.Step = 1
+	ui.comboVolume.Value = 70
+	ui.comboVolume.OnChanged = func(value float64) {
+		ui.comboVolumeLabel.SetText(fmt.Sprintf("Volume: %.0f%%", value))
+	}
+	ui.comboStatus = widget.NewLabel("No combo YAML loaded")
 
 	ui.scanInterval = widget.NewEntry()
 	ui.scanInterval.SetText(strconv.Itoa(prefs.IntWithFallback(prefScanIntervalMS, defaultScanInterval)))
@@ -245,6 +298,7 @@ func newBridgeUI(a fyne.App, w fyne.Window) *bridgeUI {
 	ui.status = widget.NewLabel("Stopped")
 	ui.connectionIcon = widget.NewIcon(antennaResource(theme.ColorNameDisabled))
 	ui.connectionStatus = widget.NewLabel("Not started")
+	ui.facingStatus = widget.NewLabel(facingStatusText(true))
 	ui.device = widget.NewLabel("-")
 	ui.lastSend = widget.NewLabel("-")
 	ui.log = widget.NewMultiLineEntry()
@@ -263,7 +317,6 @@ func newBridgeUI(a fyne.App, w fyne.Window) *bridgeUI {
 
 func (ui *bridgeUI) content() fyne.CanvasObject {
 	serverURLField := container.NewVBox(
-		widget.NewLabelWithStyle("Server", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		ui.customServer,
 		ui.serverHost,
 	)
@@ -272,25 +325,51 @@ func (ui *bridgeUI) content() fyne.CanvasObject {
 		ui.saveCurrentPreviewAs(ui.selectedProfile())
 	})
 	profileField := container.NewVBox(
-		widget.NewLabelWithStyle("Profile", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		ui.configProfile,
 		container.NewGridWithColumns(2, profileLoad, profileSave),
+	)
+	comboUpload := widget.NewButtonWithIcon("Upload YAML", theme.UploadIcon(), ui.uploadComboYAML)
+	comboReload := widget.NewButtonWithIcon("Reload", theme.ViewRefreshIcon(), ui.reloadCombos)
+	comboVolumeSave := widget.NewButtonWithIcon("Save Volume", theme.DocumentSaveIcon(), ui.saveComboVolume)
+	comboField := container.NewVBox(
+		ui.comboFile,
+		ui.comboSet,
+		ui.comboMode,
+		ui.comboRecipe,
+		ui.comboPracticeSet,
+		container.NewVBox(ui.comboLoop, ui.comboAdvance),
+		ui.comboVolumeLabel,
+		ui.comboVolume,
+		comboVolumeSave,
+		container.NewGridWithColumns(2, comboUpload, comboReload),
+		ui.comboStatus,
 	)
 	scanIntervalField := container.NewVBox(
 		widget.NewLabelWithStyle("Scan interval ms", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		ui.scanInterval,
+		ui.autoStart,
+		ui.startMinimized,
+		ui.closeToTray,
 	)
+	safetyNote := widget.NewLabel("Safety: input-cast only visualizes device input. It does not read game memory, hook rendering APIs, use macros, or automate input.")
+	safetyNote.Wrapping = fyne.TextWrapWord
 
-	options := container.NewVBox(ui.autoStart, ui.startMinimized, ui.closeToTray)
+	serverItem := widget.NewAccordionItem("Server", serverURLField)
+	serverItem.Open = true
+	comboItem := widget.NewAccordionItem("Combo", comboField)
+	comboItem.Open = true
+	configuration := widget.NewAccordion(
+		serverItem,
+		widget.NewAccordionItem("Profile", profileField),
+		comboItem,
+		widget.NewAccordionItem("Runtime", scanIntervalField),
+		widget.NewAccordionItem("Safety", safetyNote),
+	)
+	configuration.MultiOpen = true
+
 	actions := container.NewGridWithColumns(2, ui.startButton, ui.stopButton)
-	configPanel := widget.NewCard("Configuration", "", container.NewVBox(
-		serverURLField,
-		profileField,
-		scanIntervalField,
-		options,
-		widget.NewSeparator(),
-		actions,
-	))
+	configBody := container.NewBorder(nil, actions, nil, nil, container.NewVScroll(configuration))
+	configPanel := widget.NewCard("Configuration", "", configBody)
 
 	status := container.NewGridWithColumns(2,
 		widget.NewLabel("App"), ui.status,
@@ -303,6 +382,7 @@ func (ui *bridgeUI) content() fyne.CanvasObject {
 		ui.connectionIcon,
 		ui.connectionStatus,
 		layout.NewSpacer(),
+		ui.facingStatus,
 	)
 
 	previewTitle := widget.NewLabelWithStyle("Input Preview", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
@@ -316,8 +396,6 @@ func (ui *bridgeUI) content() fyne.CanvasObject {
 
 	split := container.NewHSplit(configPanel, ui.rightContent)
 	split.Offset = 0.28
-
-	go ui.loadProfilesAndCurrentConfig()
 
 	return container.NewBorder(nil, statusBar, nil, nil, split)
 }
@@ -435,19 +513,30 @@ func (ui *bridgeUI) reloadEditConfig() {
 func (ui *bridgeUI) loadProfilesAndCurrentConfig() {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
+
 	profiles, err := ui.client.FetchProfiles(ctx)
 	if err != nil {
 		ui.appendLog("profile load failed: " + err.Error())
-		return
 	}
 	cfg, err := ui.client.FetchConfig(ctx)
 	if err != nil {
 		ui.appendLog("config load failed: " + err.Error())
-		return
 	}
+	combos, comboErr := ui.client.FetchCombos(ctx)
 	fyne.Do(func() {
-		ui.applyProfiles(profiles)
-		ui.renderPreview(cfg)
+		if profiles != nil {
+			ui.applyProfiles(profiles)
+		}
+		if cfg != nil {
+			ui.renderPreview(cfg)
+			ui.applyComboVolume(cfg)
+		}
+		if comboErr == nil {
+			ui.applyCombos(combos)
+		} else {
+			ui.comboStatus.SetText("Combo load failed")
+			ui.appendLog("combo load failed: " + comboErr.Error())
+		}
 	})
 }
 
@@ -479,6 +568,7 @@ func (ui *bridgeUI) loadSelectedProfile() {
 			ui.configProfile.SetSelected(current)
 		}
 		ui.renderPreview(cfg)
+		ui.applyComboVolume(cfg)
 		ui.appendLog("profile loaded: " + current)
 	})
 }
@@ -492,6 +582,325 @@ func (ui *bridgeUI) saveCurrentPreviewAs(profile string) {
 		cfg = defaultPreviewConfig()
 	}
 	ui.saveOverlayConfig(cloneOverlayConfig(cfg), profile)
+}
+
+func (ui *bridgeUI) applyComboVolume(cfg *bridge.OverlayConfig) {
+	if cfg == nil || ui.comboVolume == nil || ui.comboVolumeLabel == nil {
+		return
+	}
+	volume := cfg.ComboAudio.Volume
+	if volume <= 0 {
+		volume = 0.7
+	}
+	volume = math.Max(0, math.Min(1, volume))
+	ui.comboVolume.Value = volume * 100
+	ui.comboVolumeLabel.SetText(fmt.Sprintf("Volume: %.0f%%", ui.comboVolume.Value))
+	ui.comboVolume.Refresh()
+}
+
+func (ui *bridgeUI) saveComboVolume() {
+	cfg := ui.currentPreview
+	if ui.editConfig != nil {
+		cfg = ui.editConfig
+	}
+	if cfg == nil {
+		cfg = defaultPreviewConfig()
+	}
+	next := cloneOverlayConfig(cfg)
+	next.ComboAudio.Volume = math.Max(0, math.Min(100, ui.comboVolume.Value)) / 100
+	ui.saveOverlayConfig(next, ui.selectedProfile())
+}
+
+func (ui *bridgeUI) reloadCombos() {
+	go ui.loadCombos()
+}
+
+func (ui *bridgeUI) loadCombos() {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	combos, err := ui.client.FetchCombos(ctx)
+	if err != nil {
+		ui.appendLog("combo load failed: " + err.Error())
+		fyne.Do(func() {
+			ui.comboStatus.SetText("Combo load failed")
+		})
+		return
+	}
+	fyne.Do(func() {
+		ui.applyCombos(combos)
+	})
+}
+
+func (ui *bridgeUI) applyCombos(combos *bridge.ComboResponse) {
+	ui.comboLoading = true
+	defer func() { ui.comboLoading = false }()
+	ui.comboState = combos
+	if combos == nil || len(combos.Files) == 0 {
+		ui.comboFile.Options = nil
+		ui.comboFile.ClearSelected()
+		ui.comboFile.Refresh()
+		ui.comboSet.Options = nil
+		ui.comboSet.ClearSelected()
+		ui.comboSet.Refresh()
+		ui.comboRecipe.Options = nil
+		ui.comboRecipe.ClearSelected()
+		ui.comboRecipe.Refresh()
+		ui.comboPracticeSet.Options = nil
+		ui.comboPracticeSet.ClearSelected()
+		ui.comboPracticeSet.Refresh()
+		ui.comboStatus.SetText("No combo YAML loaded")
+		return
+	}
+	files := make([]string, 0, len(combos.Files))
+	for _, file := range combos.Files {
+		files = append(files, file.File)
+	}
+	ui.comboFile.Options = files
+	ui.comboFile.Refresh()
+	selectedFile := combos.Current.File
+	if selectedFile == "" || !stringInSlice(files, selectedFile) {
+		selectedFile = files[0]
+	}
+	ui.comboFile.SetSelected(selectedFile)
+	ui.applyComboFileSelection(selectedFile)
+	if combos.Current.SetID != "" {
+		ui.comboSet.SetSelected(combos.Current.SetID)
+	}
+	ui.applyPracticeSelections()
+	ui.updateComboStatus()
+}
+
+func (ui *bridgeUI) applyComboFileSelection(file string) {
+	if ui.comboState == nil {
+		return
+	}
+	selected := comboFileByName(ui.comboState, file)
+	ui.comboLoading = true
+	defer func() { ui.comboLoading = false }()
+	if selected == nil {
+		ui.comboSet.Options = nil
+		ui.comboSet.ClearSelected()
+		ui.comboSet.Refresh()
+		ui.updateComboStatus()
+		return
+	}
+	options := make([]string, 0, len(selected.Sets))
+	for _, set := range selected.Sets {
+		options = append(options, set.ID)
+	}
+	ui.comboSet.Options = options
+	ui.comboSet.Refresh()
+	if ui.comboState.Current.File == file && stringInSlice(options, ui.comboState.Current.SetID) {
+		ui.comboSet.SetSelected(ui.comboState.Current.SetID)
+	} else if len(options) > 0 {
+		ui.comboSet.SetSelected(options[0])
+	}
+	ui.updateComboStatus()
+}
+
+func (ui *bridgeUI) applyPracticeSelections() {
+	if ui.comboState == nil {
+		return
+	}
+	ui.comboLoading = true
+	defer func() { ui.comboLoading = false }()
+
+	mode := string(ui.comboState.ActivePractice.Mode)
+	if mode == "" {
+		mode = string(bridge.PracticeModeFocus)
+	}
+	ui.comboMode.SetSelected(mode)
+
+	recipes := comboRecipeOptions(ui.comboState)
+	ui.comboRecipe.Options = recipes
+	ui.comboRecipe.Refresh()
+	if stringInSlice(recipes, ui.comboState.ActivePractice.ActiveRecipeID) {
+		ui.comboRecipe.SetSelected(ui.comboState.ActivePractice.ActiveRecipeID)
+	} else if len(recipes) > 0 {
+		ui.comboRecipe.SetSelected(recipes[0])
+	} else {
+		ui.comboRecipe.ClearSelected()
+	}
+
+	sets := comboPracticeSetOptions(ui.comboState)
+	ui.comboPracticeSet.Options = sets
+	ui.comboPracticeSet.Refresh()
+	if stringInSlice(sets, ui.comboState.ActivePractice.ActiveSetID) {
+		ui.comboPracticeSet.SetSelected(ui.comboState.ActivePractice.ActiveSetID)
+	} else if len(sets) > 0 {
+		ui.comboPracticeSet.SetSelected(sets[0])
+	} else {
+		ui.comboPracticeSet.ClearSelected()
+	}
+	ui.applyPracticeSetSelection(ui.comboPracticeSet.Selected)
+}
+
+func (ui *bridgeUI) applyPracticeModeSelection(value string) {
+	if ui.comboLoading {
+		return
+	}
+	if value == string(bridge.PracticeModePlaylist) {
+		if ui.comboPracticeSet.Selected == "" && len(ui.comboPracticeSet.Options) > 0 {
+			ui.comboPracticeSet.SetSelected(ui.comboPracticeSet.Options[0])
+		}
+	} else if value == string(bridge.PracticeModeFocus) {
+		if ui.comboRecipe.Selected == "" && len(ui.comboRecipe.Options) > 0 {
+			ui.comboRecipe.SetSelected(ui.comboRecipe.Options[0])
+		}
+	}
+	ui.activateSelectedCombo()
+}
+
+func (ui *bridgeUI) applyPracticeSetSelection(id string) {
+	if ui.comboState == nil {
+		return
+	}
+	set := practiceSetByID(ui.comboState, id)
+	ui.comboLoading = true
+	defer func() { ui.comboLoading = false }()
+	if set == nil {
+		ui.comboLoop.SetChecked(false)
+		ui.comboAdvance.SetChecked(false)
+		return
+	}
+	ui.comboLoop.SetChecked(set.Loop)
+	ui.comboAdvance.SetChecked(set.AdvanceOnComplete)
+	if len(set.Recipes) > 0 && !stringInSlice(set.Recipes, ui.comboRecipe.Selected) {
+		ui.comboRecipe.SetSelected(set.Recipes[0])
+	}
+}
+
+func (ui *bridgeUI) activateSelectedCombo() {
+	if ui.comboLoading {
+		return
+	}
+	file := strings.TrimSpace(ui.comboFile.Selected)
+	setID := strings.TrimSpace(ui.comboSet.Selected)
+	if file == "" || setID == "" {
+		return
+	}
+	selection := ui.selectedComboSelection(file, setID)
+	if ui.comboState != nil && comboSelectionMatches(ui.comboState.Current, selection) {
+		ui.updateComboStatus()
+		return
+	}
+	ui.comboLoading = true
+	ui.comboStatus.SetText("Changing combo...")
+	go ui.activateCombo(selection)
+}
+
+func (ui *bridgeUI) selectedComboSelection(file, setID string) bridge.ComboSelection {
+	selection := bridge.ComboSelection{
+		File:           file,
+		SetID:          setID,
+		Mode:           bridge.PracticeMode(strings.TrimSpace(ui.comboMode.Selected)),
+		ActiveRecipe:   strings.TrimSpace(ui.comboRecipe.Selected),
+		ActiveSet:      strings.TrimSpace(ui.comboPracticeSet.Selected),
+		ActiveSetIndex: 0,
+	}
+	loop := ui.comboLoop.Checked
+	advance := ui.comboAdvance.Checked
+	selection.Loop = &loop
+	selection.AdvanceOnComplete = &advance
+	if set := practiceSetByID(ui.comboState, selection.ActiveSet); set != nil {
+		for i, recipe := range set.Recipes {
+			if recipe == selection.ActiveRecipe {
+				selection.ActiveSetIndex = i
+				break
+			}
+		}
+	}
+	return selection
+}
+
+func (ui *bridgeUI) activateCombo(selection bridge.ComboSelection) {
+	defer fyne.Do(func() {
+		ui.comboLoading = false
+	})
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	if err := ui.client.ActivateComboSelection(ctx, selection); err != nil {
+		ui.appendLog("combo activate failed: " + err.Error())
+		fyne.Do(func() {
+			ui.comboStatus.SetText("Combo activate failed")
+		})
+		return
+	}
+	combos, err := ui.client.FetchCombos(ctx)
+	if err == nil {
+		fyne.Do(func() {
+			ui.applyCombos(combos)
+		})
+	} else {
+		fyne.Do(func() {
+			ui.comboStatus.SetText("Combo selected")
+		})
+	}
+	ui.appendLog("combo selected: " + selection.File + " / " + selection.SetID)
+}
+
+func (ui *bridgeUI) uploadComboYAML() {
+	dialogBox := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
+		if err != nil {
+			ui.appendLog("combo upload failed: " + err.Error())
+			return
+		}
+		if reader == nil {
+			return
+		}
+		defer reader.Close()
+		body, err := io.ReadAll(reader)
+		if err != nil {
+			ui.appendLog("combo upload failed: " + err.Error())
+			return
+		}
+		name := filepath.Base(reader.URI().Path())
+		ui.comboStatus.SetText("Uploading combo...")
+		go ui.uploadCombo(name, body)
+	}, ui.window)
+	dialogBox.SetFilter(storage.NewExtensionFileFilter([]string{".yaml", ".yml"}))
+	dialogBox.Show()
+}
+
+func (ui *bridgeUI) uploadCombo(name string, body []byte) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := ui.client.UploadCombo(ctx, name, body); err != nil {
+		ui.appendLog("combo upload failed: " + err.Error())
+		fyne.Do(func() {
+			ui.comboStatus.SetText("Combo upload failed")
+		})
+		return
+	}
+	ui.appendLog("combo uploaded: " + name)
+	combos, err := ui.client.FetchCombos(ctx)
+	if err != nil {
+		fyne.Do(func() {
+			ui.comboStatus.SetText("Combo uploaded")
+		})
+		return
+	}
+	fyne.Do(func() {
+		ui.applyCombos(combos)
+	})
+}
+
+func (ui *bridgeUI) updateComboStatus() {
+	if ui.comboState == nil || len(ui.comboState.Files) == 0 {
+		ui.comboStatus.SetText("No combo YAML loaded")
+		return
+	}
+	file := comboFileByName(ui.comboState, ui.comboFile.Selected)
+	if file == nil {
+		ui.comboStatus.SetText("Select combo file")
+		return
+	}
+	set := comboSetByID(file, ui.comboSet.Selected)
+	if set == nil {
+		ui.comboStatus.SetText("Select combo set")
+		return
+	}
+	ui.comboStatus.SetText(set.Name + " (" + set.Mode + ")")
 }
 
 func (ui *bridgeUI) applyProfiles(profiles *bridge.ProfilesResponse) {
@@ -580,6 +989,7 @@ func (ui *bridgeUI) saveOverlayConfig(cfg *bridge.OverlayConfig, profile string)
 	profiles, _ := ui.client.FetchProfiles(ctx)
 	fyne.Do(func() {
 		ui.renderPreview(cfg)
+		ui.applyComboVolume(cfg)
 		if profiles != nil {
 			ui.applyProfiles(profiles)
 		}
@@ -1012,19 +1422,8 @@ func (ui *bridgeUI) checkConnection(ctx context.Context) {
 	wasConnected := ui.connected.Swap(true)
 	ui.setConnection(true, "Connected")
 	if !wasConnected {
-		ui.loadPreviewConfig(ctx)
+		ui.loadProfilesAndCurrentConfig()
 	}
-}
-
-func (ui *bridgeUI) loadPreviewConfig(ctx context.Context) {
-	cfg, err := ui.client.FetchConfig(ctx)
-	if err != nil {
-		ui.appendLog("config load failed: " + err.Error())
-		return
-	}
-	fyne.Do(func() {
-		ui.renderPreview(cfg)
-	})
 }
 
 func (ui *bridgeUI) consumeUpdates(ctx context.Context, updates <-chan gamepad.Snapshot) {
@@ -1047,6 +1446,7 @@ func (ui *bridgeUI) consumeUpdates(ctx context.Context, updates <-chan gamepad.S
 			if snapshot.Buttons == nil {
 				continue
 			}
+			ui.updateFacingFromButtons(snapshot.Buttons)
 			ui.setPreview(snapshot.Buttons)
 			if !ui.connected.Load() {
 				continue
@@ -1066,6 +1466,20 @@ func (ui *bridgeUI) consumeUpdates(ctx context.Context, updates <-chan gamepad.S
 			}
 		}
 	}
+}
+
+func (ui *bridgeUI) updateFacingFromButtons(buttons map[string]bool) {
+	pressed := buttons["up"] && (buttons["s1"] || buttons["ba"] || buttons["BA"] || buttons["back"] || buttons["BACK"])
+	if !pressed {
+		ui.facingToggleDown = false
+		return
+	}
+	if ui.facingToggleDown {
+		return
+	}
+	ui.facingToggleDown = true
+	ui.facingRight = !ui.facingRight
+	ui.setFacingStatus(ui.facingRight)
 }
 
 func (ui *bridgeUI) scanIntervalDuration() time.Duration {
@@ -1131,6 +1545,19 @@ func (ui *bridgeUI) setLastSend(value string) {
 	fyne.Do(func() {
 		ui.lastSend.SetText(value)
 	})
+}
+
+func (ui *bridgeUI) setFacingStatus(right bool) {
+	fyne.Do(func() {
+		ui.facingStatus.SetText(facingStatusText(right))
+	})
+}
+
+func facingStatusText(right bool) string {
+	if right {
+		return "Facing: 右向き (1P)"
+	}
+	return "Facing: 左向き (2P)"
 }
 
 func (ui *bridgeUI) setPreview(buttons map[string]bool) {
@@ -1403,10 +1830,96 @@ func filepathExt(name string) string {
 	return name[index:]
 }
 
+func stringInSlice(values []string, target string) bool {
+	for _, value := range values {
+		if value == target {
+			return true
+		}
+	}
+	return false
+}
+
+func comboFileByName(combos *bridge.ComboResponse, name string) *bridge.ComboFileSummary {
+	if combos == nil {
+		return nil
+	}
+	for i := range combos.Files {
+		if combos.Files[i].File == name {
+			return &combos.Files[i]
+		}
+	}
+	return nil
+}
+
+func comboSetByID(file *bridge.ComboFileSummary, id string) *bridge.ComboSetSummary {
+	if file == nil {
+		return nil
+	}
+	for i := range file.Sets {
+		if file.Sets[i].ID == id {
+			return &file.Sets[i]
+		}
+	}
+	return nil
+}
+
+func comboRecipeOptions(combos *bridge.ComboResponse) []string {
+	if combos == nil || combos.ActiveSet == nil {
+		return nil
+	}
+	options := make([]string, 0, len(combos.ActiveSet.Combos))
+	for _, combo := range combos.ActiveSet.Combos {
+		if combo.ID != "" {
+			options = append(options, combo.ID)
+		}
+	}
+	return options
+}
+
+func comboPracticeSetOptions(combos *bridge.ComboResponse) []string {
+	if combos == nil {
+		return nil
+	}
+	options := make([]string, 0, len(combos.PracticeSets))
+	for _, set := range combos.PracticeSets {
+		options = append(options, set.ID)
+	}
+	return options
+}
+
+func practiceSetByID(combos *bridge.ComboResponse, id string) *bridge.PracticeSet {
+	if combos == nil {
+		return nil
+	}
+	for i := range combos.PracticeSets {
+		if combos.PracticeSets[i].ID == id {
+			return &combos.PracticeSets[i]
+		}
+	}
+	return nil
+}
+
+func comboSelectionMatches(left, right bridge.ComboSelection) bool {
+	return left.File == right.File &&
+		left.SetID == right.SetID &&
+		left.Mode == right.Mode &&
+		left.ActiveRecipe == right.ActiveRecipe &&
+		left.ActiveSet == right.ActiveSet &&
+		left.ActiveSetIndex == right.ActiveSetIndex &&
+		boolPointerValue(left.Loop) == boolPointerValue(right.Loop) &&
+		boolPointerValue(left.AdvanceOnComplete) == boolPointerValue(right.AdvanceOnComplete)
+}
+
+func boolPointerValue(value *bool) bool {
+	return value != nil && *value
+}
+
 func defaultPreviewConfig() *bridge.OverlayConfig {
 	visible := true
 	return &bridge.OverlayConfig{
-		Controller: bridge.ControllerConfig{X: 855, Y: 946, Width: 210, Height: 120, Color: "#5f7e91"},
+		ComboDisplay: bridge.ComboDisplayConfig{Enabled: true, X: 398, Y: 120, Width: 420, Height: 520, ShowBorder: true},
+		ComboAudio:   bridge.ComboAudioConfig{Volume: 0.7},
+		Controller:   bridge.ControllerConfig{X: 855, Y: 946, Width: 210, Height: 120, Color: "#5f7e91"},
 		Buttons: []bridge.ButtonConfig{
 			{ID: "left", Label: "←", Visible: &visible, X: 860, Y: 987, Size: 24},
 			{ID: "down", Label: "↓", Visible: &visible, X: 889, Y: 979, Size: 24},
@@ -1431,8 +1944,10 @@ func cloneOverlayConfig(src *bridge.OverlayConfig) *bridge.OverlayConfig {
 		return nil
 	}
 	dst := &bridge.OverlayConfig{
-		Controller: src.Controller,
-		Buttons:    make([]bridge.ButtonConfig, len(src.Buttons)),
+		ComboDisplay: src.ComboDisplay,
+		ComboAudio:   src.ComboAudio,
+		Controller:   src.Controller,
+		Buttons:      make([]bridge.ButtonConfig, len(src.Buttons)),
 	}
 	copy(dst.Buttons, src.Buttons)
 	return dst

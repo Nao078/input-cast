@@ -30,6 +30,8 @@ func main() {
 
 	configsDir := filepath.Join(base, "configs")
 	activeProfilePath := filepath.Join(configsDir, ".active-profile")
+	combosDir := filepath.Join(base, "combos")
+	activeComboPath := filepath.Join(combosDir, ".active-combo")
 	configName := *configFlag
 	if configName == "" {
 		configName = loadActiveProfile(activeProfilePath)
@@ -42,6 +44,7 @@ func main() {
 	}
 
 	hub := ws.NewHub()
+	comboSvc := newComboService(combosDir, activeComboPath, hub)
 	// input manager and providers
 	manager := input.NewManager()
 	// subscribe hub broadcast to manager notifications
@@ -86,6 +89,9 @@ func main() {
 		if cfg != nil {
 			msg := map[string]interface{}{"type": "config", "config": cfg}
 			_ = c.WriteJSON(msg)
+		}
+		if comboCfg, err := comboSvc.response(); err == nil {
+			_ = c.WriteJSON(comboConfigMessage(comboCfg))
 		}
 		// send last-state for each provider
 		infos := manager.ProvidersInfo()
@@ -190,6 +196,8 @@ func main() {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]string{"current": currentProfile})
 	})
+
+	comboSvc.registerHandlers()
 
 	http.HandleFunc("/api/mapping", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
