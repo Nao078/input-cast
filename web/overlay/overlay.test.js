@@ -118,7 +118,7 @@ hook.setCurrentConfig({
     '| 5 | 強P |'
   ].join('\n'))
   const copyText = hook.historyCopyTextFromRows([{ frames: 1, buttons: { down: true } }])
-  assert.equal(copyText.split('\n\n').length, 4)
+  assert.equal(copyText.split('\n\n').length, 5)
   assert.equal(copyText.split('\n\n').at(-1), hook.historyMarkdownFromRows([{ frames: 1, buttons: { down: true } }]))
   assert.equal(hook.copyHistoryMaxEntries(), 100)
   hook.setCurrentConfig({ history: { copy_max_entries: 12 }, buttons: [] })

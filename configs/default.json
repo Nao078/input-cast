@@ -15,7 +15,7 @@
     "copy_max_entries": 100
   },
   "combo_display": {
-    "enabled": true,
+    "enabled": false,
     "x": 368,
     "y": 120,
     "width": 420,

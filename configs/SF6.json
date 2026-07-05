@@ -15,12 +15,15 @@
     "copy_max_entries": 100
   },
   "combo_display": {
-    "enabled": true,
+    "enabled": false,
+    "show_border": true,
     "x": 308,
     "y": 120,
     "width": 420,
-    "height": 520,
-    "show_border": false
+    "height": 520
+  },
+  "combo_audio": {
+    "volume": 0
   },
   "controller": {
     "x": 855,
@@ -72,7 +75,7 @@
     },
     {
       "id": "b1",
-      "label": "K",
+      "label": "LK",
       "history_color": "#007dff",
       "visible": true,
       "x": 950,
@@ -83,7 +86,7 @@
     },
     {
       "id": "b2",
-      "label": "K",
+      "label": "MK",
       "visible": true,
       "x": 977,
       "y": 988,
@@ -93,7 +96,7 @@
     },
     {
       "id": "b3",
-      "label": "P",
+      "label": "LP",
       "visible": true,
       "x": 948,
       "y": 971,
@@ -103,7 +106,7 @@
     },
     {
       "id": "b4",
-      "label": "P",
+      "label": "MP",
       "visible": true,
       "x": 976,
       "y": 960,
@@ -133,7 +136,7 @@
     },
     {
       "id": "r1",
-      "label": "P",
+      "label": "HP",
       "visible": true,
       "x": 1004,
       "y": 957,
@@ -143,7 +146,7 @@
     },
     {
       "id": "r2",
-      "label": "K",
+      "label": "HK",
       "visible": true,
       "x": 1005,
       "y": 987,
