@@ -43,3 +43,8 @@ html,body{height:100%;margin:0;background:transparent;overflow:hidden}
 .combo-success{display:none;position:absolute;left:calc(100% + 36px);top:50%;transform:translateY(-50%);padding:0 10px;color:#f4a8ff;font-size:52px;font-weight:900;letter-spacing:0;text-shadow:0 0 5px #f246ff,0 0 13px rgba(242,70,255,0.92),0 0 25px rgba(242,70,255,0.7),0 3px 4px rgba(0,0,0,0.9);white-space:nowrap}
 .combo-success.show{display:block;animation:combo-success-vanish 1.5s steps(2,end) forwards}
 @keyframes combo-success-vanish{0%{opacity:1;filter:brightness(1.2)}16%{opacity:0.22;filter:brightness(0.8)}32%{opacity:1;filter:brightness(1.2)}48%{opacity:0.26;filter:brightness(0.82)}64%{opacity:1;filter:brightness(1.15)}82%{opacity:0.35;filter:brightness(0.9)}100%{opacity:0;filter:brightness(0.7)}}
+
+.history-menu{position:fixed;z-index:20;min-width:132px;box-sizing:border-box;padding:5px;border:1px solid rgba(255,255,255,0.24);border-radius:8px;background:rgba(18,20,24,0.94);box-shadow:0 10px 24px rgba(0,0,0,0.38);backdrop-filter:blur(6px)}
+.history-menu[hidden]{display:none}
+.history-menu-item{display:block;width:100%;box-sizing:border-box;padding:8px 10px;border:0;border-radius:5px;background:transparent;color:#fff;font:700 13px/1.1 system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;text-align:left;white-space:nowrap;cursor:pointer}
+.history-menu-item:hover,.history-menu-item:focus{background:rgba(255,255,255,0.14);outline:0}

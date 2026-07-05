@@ -4,6 +4,7 @@
   let currentState = { buttons: {} }
   let currentConfig = null
   let historyList = null
+  let historyMenu = null
   let historyEntries = []
   let activeHistory = null
   let comboPanel = null
@@ -127,9 +128,92 @@
     history.style.top = (h.y || 40) + 'px'
     history.style.width = (h.width || 250) + 'px'
     history.style.height = (h.height || 1000) + 'px'
-    history.innerHTML = '<div class="history-list"></div>'
+    history.innerHTML = '<div class=history-list></div>'
+    history.addEventListener('click', event => {
+      event.stopPropagation()
+      showHistoryMenu(event.clientX, event.clientY)
+    })
     overlay.appendChild(history)
     historyList = history.querySelector('.history-list')
+    ensureHistoryMenu()
+  }
+
+  function ensureHistoryMenu(){
+    if (historyMenu) return historyMenu
+    historyMenu = document.createElement('div')
+    historyMenu.className = 'history-menu'
+    historyMenu.hidden = true
+    historyMenu.innerHTML = [
+      '<button type=button class=history-menu-item data-action=copy>コピー</button>',
+      '<button type=button class=history-menu-item data-action=clear>履歴をクリア</button>'
+    ].join('')
+    historyMenu.addEventListener('click', event => {
+      event.stopPropagation()
+      const action = event.target && event.target.dataset && event.target.dataset.action
+      if (action === 'copy') {
+        copyHistoryMarkdown()
+      } else if (action === 'clear') {
+        clearHistory()
+      }
+      hideHistoryMenu()
+    })
+    document.body.appendChild(historyMenu)
+    return historyMenu
+  }
+
+  function showHistoryMenu(clientX, clientY){
+    const menu = ensureHistoryMenu()
+    menu.hidden = false
+    menu.style.left = '0px'
+    menu.style.top = '0px'
+    const rect = menu.getBoundingClientRect ? menu.getBoundingClientRect() : { width: 0, height: 0 }
+    const margin = 8
+    const viewportWidth = window.innerWidth || 0
+    const viewportHeight = window.innerHeight || 0
+    const maxX = viewportWidth > 0 ? Math.max(margin, viewportWidth - rect.width - margin) : clientX
+    const maxY = viewportHeight > 0 ? Math.max(margin, viewportHeight - rect.height - margin) : clientY
+    const x = Math.min(Math.max(margin, clientX), maxX)
+    const y = Math.min(Math.max(margin, clientY), maxY)
+    menu.style.left = x + 'px'
+    menu.style.top = y + 'px'
+  }
+
+  function hideHistoryMenu(){
+    if (historyMenu) historyMenu.hidden = true
+  }
+
+  function clearHistory(){
+    activeHistory = null
+    historyEntries = []
+    renderHistory()
+  }
+
+  function copyHistoryMarkdown(){
+    const markdown = historyMarkdownTable()
+    return writeClipboardText(markdown)
+  }
+
+  function writeClipboardText(value){
+    if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(value).catch(() => fallbackWriteClipboardText(value))
+    }
+    return fallbackWriteClipboardText(value)
+  }
+
+  function fallbackWriteClipboardText(value){
+    const textarea = document.createElement('textarea')
+    textarea.value = value
+    textarea.setAttribute('readonly', '')
+    textarea.style.position = 'fixed'
+    textarea.style.left = '-9999px'
+    document.body.appendChild(textarea)
+    textarea.select()
+    try {
+      if (document.execCommand) document.execCommand('copy')
+    } finally {
+      document.body.removeChild(textarea)
+    }
+    return Promise.resolve()
   }
 
   function buildComboPanel(cfg){
@@ -239,6 +323,36 @@
         '</div>'
       ].join('')
     }).join('')
+  }
+
+  function historyRowsChronological(){
+    const rows = historyEntries.slice().reverse().map(entry => ({
+      frames: entry.frames,
+      buttons: entry.buttons
+    }))
+    if (activeHistory) {
+      rows.push({ frames: activeHistory.frames || 1, buttons: activeHistory.buttons })
+    }
+    return rows
+  }
+
+  function historyMarkdownTable(){
+    return historyMarkdownFromRows(historyRowsChronological())
+  }
+
+  function historyMarkdownFromRows(rows){
+    const lines = [
+      '| フレーム | コマンド |',
+      '| --- | --- |'
+    ]
+    ;(Array.isArray(rows) ? rows : []).forEach(entry => {
+      lines.push('| ' + markdownCell(entry.frames) + ' | ' + markdownCell(historyCommandText(entry.buttons || {})) + ' |')
+    })
+    return lines.join('\n')
+  }
+
+  function markdownCell(value){
+    return String(value == null ? '' : value).replace(/\|/g, '\\|')
   }
 
   function applyComboConfig(nextConfig){
@@ -1118,6 +1232,37 @@
     return { direction, buttons }
   }
 
+  function historyCommandText(buttonsState){
+    const direction = historyNumpadDirection(buttonsState || {})
+    const labels = buttonOrder
+      .filter(id => buttonsState && buttonsState[id])
+      .map(id => buttonCommandLabel(id))
+    if (labels.length === 0) return direction
+    if (direction === '5') return labels.join('+')
+    return [direction].concat(labels).join('+')
+  }
+
+  function historyNumpadDirection(buttonsState){
+    const up = !!buttonsState.up
+    const down = !!buttonsState.down
+    const left = !!buttonsState.left
+    const right = !!buttonsState.right
+    if (down && left && !up && !right) return '1'
+    if (down && !left && !right) return '2'
+    if (down && right && !up && !left) return '3'
+    if (left && !up && !down && !right) return '4'
+    if (right && !up && !down && !left) return '6'
+    if (up && left && !down && !right) return '7'
+    if (up && !left && !right) return '8'
+    if (up && right && !down && !left) return '9'
+    return '5'
+  }
+
+  function buttonCommandLabel(id){
+    const def = buttonDefFor(id)
+    return (def && (def.history_label || def.label)) || labelFor(id) || id
+  }
+
   function formatDirections(buttonsState){
     const up = !!buttonsState.up
     const down = !!buttonsState.down
@@ -1234,6 +1379,8 @@
     timingForWindow,
     comboAudioVolume,
     intersects,
+    historyCommandText,
+    historyMarkdownFromRows,
     processComboInput,
     unlockAudio,
     updateFacingFromButtons,
@@ -1260,7 +1407,16 @@
 
   // initial load
   fetchConfig().then(cfg=>{ buildButtons(cfg); return fetchComboConfig() }).then(cfg=>{ applyComboConfig(cfg); connect() }).catch(e=>{ console.error(e); connect() })
-  window.addEventListener('resize', fitOverlay)
+  window.addEventListener('resize', () => {
+    hideHistoryMenu()
+    fitOverlay()
+  })
+  if (document.addEventListener) {
+    document.addEventListener('click', hideHistoryMenu)
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') hideHistoryMenu()
+    })
+  }
   addAudioUnlockListeners()
   startHistoryTicker()
 

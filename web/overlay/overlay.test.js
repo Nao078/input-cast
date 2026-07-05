@@ -11,6 +11,9 @@ function element(){
     textContent: '',
     dataset: {},
     appendChild(){},
+    removeChild(){},
+    getBoundingClientRect(){ return { width: 120, height: 72 } },
+    select(){},
     querySelector(){ return element() },
     classList: { add(){}, toggle(){} },
     setAttribute(){},
@@ -43,8 +46,11 @@ const context = {
     return Promise.resolve({ json: () => Promise.resolve(payload) })
   },
   document: {
+    body: element(),
     getElementById(){ return element() },
-    createElement(){ return element() }
+    createElement(){ return element() },
+    addEventListener(){},
+    execCommand(){ return true }
   },
   window: windowObject,
   location: windowObject.location
@@ -85,6 +91,33 @@ hook.setCurrentConfig({
     { id: 'r2', label: 'HK', history_label: 'HK' }
   ]
 })
+
+{
+  hook.setCurrentConfig({
+    buttons: [
+      { id: 'r1', label: '強P' },
+      { id: 'b1', label: '弱K' }
+    ]
+  })
+  assert.equal(hook.historyCommandText({ down: true }), '2')
+  assert.equal(hook.historyCommandText({ down: true, right: true }), '3')
+  assert.equal(hook.historyCommandText({ right: true, r1: true }), '6+強P')
+  assert.equal(hook.historyCommandText({ r1: true }), '強P')
+  assert.equal(hook.historyCommandText({}), '5')
+  assert.equal(hook.historyMarkdownFromRows([
+    { frames: 3, buttons: { down: true } },
+    { frames: 4, buttons: { down: true, right: true } },
+    { frames: 3, buttons: { right: true, r1: true } },
+    { frames: 5, buttons: { r1: true } }
+  ]), [
+    '| フレーム | コマンド |',
+    '| --- | --- |',
+    '| 3 | 2 |',
+    '| 4 | 3 |',
+    '| 3 | 6+強P |',
+    '| 5 | 強P |'
+  ].join('\n'))
+}
 
 {
   const from = { id: 'jab', cancelWindows: [{ start: 4, end: 8, targets: ['target'] }] }
