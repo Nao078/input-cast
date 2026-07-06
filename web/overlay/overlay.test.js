@@ -126,6 +126,22 @@ hook.setCurrentConfig({
 }
 
 {
+  hook.clearHistory()
+  hook.updateHistoryFromState({ buttons: { b1: true } })
+  hook.updateHistoryFromState({ buttons: { b2: true } })
+  assert.equal(hook.getHistoryRows().length, 2)
+
+  hook.updateHistoryFromState({ buttons: { a1: true } })
+  assert.equal(hook.getHistoryRows().length, 0)
+
+  hook.updateHistoryFromState({ buttons: { a1: true } })
+  assert.equal(hook.getHistoryRows().length, 0)
+
+  hook.updateHistoryFromState({ buttons: {} })
+  assert.equal(hook.getHistoryRows().length, 1)
+}
+
+{
   const from = { id: 'jab', cancelWindows: [{ start: 4, end: 8, targets: ['target'] }] }
   assert.equal(hook.canTransitionByCancelWindow(from, { id: 'target' }, 6).state, 'ok')
 }

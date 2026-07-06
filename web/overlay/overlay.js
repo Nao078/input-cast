@@ -8,6 +8,7 @@
   let historyEntries = []
   let copyHistoryEntries = []
   let activeHistory = null
+  let historyClearButtonDown = false
   let comboPanel = null
   let comboConfig = null
   let comboProgress = []
@@ -271,6 +272,7 @@
   }
 
   function updateHistoryFromState(state){
+    if (consumeHistoryClearButton(state.buttons || {})) return
     const now = performance.now()
     const key = stateKey(state.buttons || {})
     if (!activeHistory) {
@@ -296,6 +298,17 @@
     activeHistory = { key, buttons: cloneButtons(state.buttons || {}), startedAt: now, frames: 1 }
     processComboInput(activeHistory.buttons, elapsedFrames)
     renderHistory()
+  }
+
+  function consumeHistoryClearButton(buttonsState){
+    const clearPressed = !!buttonsState.a1
+    if (!clearPressed) {
+      historyClearButtonDown = false
+      return false
+    }
+    if (!historyClearButtonDown) clearHistory()
+    historyClearButtonDown = true
+    return true
   }
 
   function frameCount(startedAt, now){
@@ -1410,6 +1423,8 @@
     copyHistoryMaxEntries,
     historyCopyTextFromRows,
     historyMarkdownFromRows,
+    clearHistory,
+    updateHistoryFromState,
     processComboInput,
     unlockAudio,
     updateFacingFromButtons,
@@ -1431,6 +1446,9 @@
       return comboProgress.map(progress => Object.assign({}, progress, {
         feedback: progress.feedback ? Object.assign({}, progress.feedback) : null
       }))
+    },
+    getHistoryRows(){
+      return historyRowsChronological()
     }
   }
 
